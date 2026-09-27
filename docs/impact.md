@@ -98,14 +98,14 @@ CRLF у CSV для «Облік-Плюс» — частина контракту
 
 | Тест | Що фіксує | Зелений на незміненому коді? |
 |---|---|---|
-| `formatDate: current output is MM/DD/YYYY in UTC` | Сама спільна функція: `03/09/2026`, доповнення нулями, кінець року, рядок із часом, `Date` в UTC | <Task B, пункт 3> |
-| `formatDate: empty and broken input give an empty string` | `''`, `null`, `undefined`, «не дата», `Invalid Date` → `''` | <Task B, пункт 3> |
-| `GET /invoices/INV-2026-00007 serves the golden HTML` | **Споживач 1.** Справжній HTTP-сервер (`createServer().listen(0)`): статус 200, `content-type`, увесь HTML дорівнює `golden/invoice-INV-2026-00007.json` («Дата: 03/07/2026 · Сплатити до: 03/21/2026») | <Task B, пункт 3> |
-| `bin/render-invoice.js prints the same golden HTML` | **Споживач 2.** CLI у дочірньому процесі: код 0, stdout дорівнює тому самому еталону | <Task B, пункт 3> |
-| `renderInvoiceHtml: dates line of every seeded invoice matches the golden` | **Споживачі 1-2.** Рядок дат для всіх 36 рахунків із фікстур (`golden/invoice-dates.json`) | <Task B, пункт 3> |
-| `buildReminders on the seed data for 2026-03-18 matches the golden` | **Споживач 3.** Усі 13 листів дня (2 `upcoming`, 11 `overdue`): адресат, тема, текст (`golden/reminders-2026-03-18.json`), плюс явно «слід сплатити до 03/21/2026.» і «мав бути сплачений до 03/16/2026.» | <Task B, пункт 3> |
-| `buildAccountingFile on the seed data matches the golden byte for byte` | **Споживач 4.** Увесь CSV для «Облік-Плюс» байт у байт, з CRLF (`golden/oblik-export.json`): заголовки, `MM/DD/YYYY`, суми `1234.50`, `;` | <Task B, пункт 3> |
-| `Облік-Плюс file: DocDate and PayUntil are MM/DD/YYYY of issued_at / due_at` | **Споживач 4, контракт без еталону:** для кожного рядка `DocDate`/`PayUntil` = `MM/DD/YYYY` від `issued_at`/`due_at`; колонки шукаються за заголовком, тож тест витримує перестановку колонок у `export-columns.json` | <Task B, пункт 3> |
+| `formatDate: current output is MM/DD/YYYY in UTC` | Сама спільна функція: `03/09/2026`, доповнення нулями, кінець року, рядок із часом, `Date` в UTC | так |
+| `formatDate: empty and broken input give an empty string` | `''`, `null`, `undefined`, «не дата», `Invalid Date` → `''` | так |
+| `GET /invoices/INV-2026-00007 serves the golden HTML` | **Споживач 1.** Справжній HTTP-сервер (`createServer().listen(0)`): статус 200, `content-type`, увесь HTML дорівнює `golden/invoice-INV-2026-00007.json` («Дата: 03/07/2026 · Сплатити до: 03/21/2026») | так |
+| `bin/render-invoice.js prints the same golden HTML` | **Споживач 2.** CLI у дочірньому процесі: код 0, stdout дорівнює тому самому еталону | так |
+| `renderInvoiceHtml: dates line of every seeded invoice matches the golden` | **Споживачі 1-2.** Рядок дат для всіх 36 рахунків із фікстур (`golden/invoice-dates.json`) | так |
+| `buildReminders on the seed data for 2026-03-18 matches the golden` | **Споживач 3.** Усі 13 листів дня (2 `upcoming`, 11 `overdue`): адресат, тема, текст (`golden/reminders-2026-03-18.json`), плюс явно «слід сплатити до 03/21/2026.» і «мав бути сплачений до 03/16/2026.» | так |
+| `buildAccountingFile on the seed data matches the golden byte for byte` | **Споживач 4.** Увесь CSV для «Облік-Плюс» байт у байт, з CRLF (`golden/oblik-export.json`): заголовки, `MM/DD/YYYY`, суми `1234.50`, `;` | так |
+| `Облік-Плюс file: DocDate and PayUntil are MM/DD/YYYY of issued_at / due_at` | **Споживач 4, контракт без еталону:** для кожного рядка `DocDate`/`PayUntil` = `MM/DD/YYYY` від `issued_at`/`due_at`; колонки шукаються за заголовком, тож тест витримує перестановку колонок у `export-columns.json` | так |
 
 **Чи ловлять тести зміну.** Перевірка без змін у репо: preload-скрипт
 (`NODE_OPTIONS=--require …`) підміняв у пам'яті `formatDate` на
@@ -117,7 +117,14 @@ CRLF у CSV для «Облік-Плюс» — частина контракту
 `bin/send-reminders.js:24-25`). Скрипт пише у фіксовану `app/out/mail`, а дати
 з `formatDate` у конверті немає (ім'я файлу бере ISO-дату запуску).
 
-Коміт із тестами (до зміни): `<Task B, пункт 3>`
+Коміт із тестами (до зміни): `ac903d4`
+
+Як перевірено «зелені на незміненому коді»: коміт `ac903d4` не змінює нічого
+в `app/lib/`, `app/bin/`, `app/config/`, `app/data/`, `app/server.js`
+(`git diff main --stat -- …` → порожньо). На ньому `cd app && npm test` →
+`tests 114, pass 114, fail 0` (106 засіяних + 8 характеризаційних), і в
+робочій копії, і у свіжому клоні `ac903d4`, де git переписав файли на CRLF
+(`core.autocrlf=true`).
 
 ## 5. Після зміни (Task C)
 
