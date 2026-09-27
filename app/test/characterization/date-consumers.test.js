@@ -82,7 +82,7 @@ test('GET /invoices/INV-2026-00007 serves the golden HTML', async function (t) {
   assert.equal(res.status, 200);
   assert.equal(res.type, 'text/html; charset=utf-8');
   assert.equal(res.body, golden('invoice-INV-2026-00007.json'));
-  assert.match(res.body, /Дата: <b>03\/07\/2026<\/b> · Сплатити до: <b>03\/21\/2026<\/b>/);
+  assert.match(res.body, /Дата: <b>07\.03\.2026<\/b> · Сплатити до: <b>21\.03\.2026<\/b>/);
 });
 
 // --- consumer 2: the same HTML from the CLI (bin/render-invoice.js) --------
@@ -115,10 +115,10 @@ test('buildReminders on the seed data for 2026-03-18 matches the golden', async 
   // both kinds of mail carry a formatted due date
   var upcoming = mails.filter(function (m) { return m.invoice_id === 7; })[0];
   assert.equal(upcoming.kind, 'upcoming');
-  assert.match(upcoming.text, /слід сплатити до 03\/21\/2026\./);
+  assert.match(upcoming.text, /слід сплатити до 21\.03\.2026\./);
   var overdue = mails.filter(function (m) { return m.invoice_id === 2; })[0];
   assert.equal(overdue.kind, 'overdue');
-  assert.match(overdue.text, /мав бути сплачений до 03\/16\/2026\./);
+  assert.match(overdue.text, /мав бути сплачений до 16\.03\.2026\./);
 });
 
 // --- consumer 4: nightly CSV for Облік-Плюс (bin/nightly-export.js) --------
