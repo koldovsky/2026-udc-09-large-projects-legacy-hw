@@ -2,9 +2,11 @@
  * Characterization tests for BILL-482: pin the CURRENT output of everything
  * that goes through lib/format.js formatDate (see docs/impact.md, section 2).
  *
- * Golden files in ./golden were captured from the unchanged code. They are
- * JSON on purpose: the CSV for Облік-Плюс must keep its CRLF, and JSON escapes
- * survive git's autocrlf, raw .csv/.html files would not.
+ * Golden files in ./golden were captured from the unchanged code. After
+ * BILL-482 only the dates in the three human-facing ones (invoice, reminders)
+ * became DD.MM.YYYY; oblik-export.json is untouched (docs/impact.md, section 5).
+ * They are JSON on purpose: the CSV for Облік-Плюс must keep its CRLF, and JSON
+ * escapes survive git's autocrlf, raw .csv/.html files would not.
  */
 var test = require('node:test');
 var assert = require('node:assert/strict');

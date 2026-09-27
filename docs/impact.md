@@ -152,6 +152,12 @@ CRLF у CSV для «Облік-Плюс» — частина контракту
 `bin/send-reminders.js:24-25`). Скрипт пише у фіксовану `app/out/mail`, а дати
 з `formatDate` у конверті немає (ім'я файлу бере ISO-дату запуску).
 
+> Пізніше в тому самому файлі: у Task C оновлено дати в трьох еталонах для
+> людей (розділ 5), у Task E додано ще 3 тести — `formatDateUa: DD.MM.YYYY in
+> UTC`, `formatDateUa: empty and broken input give an empty string`,
+> `Облік-Плюс file: draft invoices are left out` (`docs/task-e-bonus.md`).
+> Разом зараз 11 характеризаційних тестів, `npm test` → 117/117.
+
 Коміт із тестами (до зміни): `ac903d4`
 
 Як перевірено «зелені на незміненому коді»: коміт `ac903d4` не змінює нічого
