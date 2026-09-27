@@ -56,6 +56,11 @@
 > Позначка **(коментар)** означає, що твердження взято з коментаря в коді, а
 > не з виконуваної логіки. Наприклад, розклад cron: самого `ops/crontab` у
 > репозиторії немає.
+>
+> Карту складено в Task A (до BILL-482). Після зміни в Task C (`a0e14b7`)
+> оновлено форматери дат: `lib/format.js` у таблиці модулів і таблицю
+> «Де форматуються дати й гроші». Перевірку в розділі 3 лишено як є, з
+> приміткою там, де стан коду змінився.
 
 ### Точки входу
 
@@ -87,7 +92,7 @@
 |---|---|---|
 | `lib/store.js` | JSON-«БД»: колекція = `data/<name>.json`, ліниве завантаження, кеш у пам'яті. `insert`/`update` міняють лише кеш, на диск пише тільки `save()`. Файл, якого немає, читається як `[]` | Живий, використовують усі |
 | `lib/http/router.js` | Роутер, `:param`, JSON/HTML-відповіді, `x-staff-id`, `httpError` | Живий |
-| `lib/format.js` | Спільні форматери: `formatDate`, `formatMoney`, `formatDecimal`, `formatText`, `formatPercent` | Живий. Споживачі: рахунок, нагадування, експорт |
+| `lib/format.js` | Спільні форматери: `formatDate` (`MM/DD/YYYY`, для CSV «Облік-Плюс»), `formatDateUa` (`ДД.ММ.РРРР`, для людей; додано в BILL-482), `formatMoney`, `formatDecimal`, `formatText`, `formatPercent` | Живий. Споживачі: рахунок і нагадування (`formatDateUa`, `formatMoney`), експорт (`formatDate`, `formatDecimal`, `formatText`) |
 | `lib/invoices/` | Виставлення рахунку із замовлення: ПДВ 20 % на суму без ПДВ, округлення до копійки, строк оплати 14 днів, номер `INV-YYYY-NNNNN`, `isOverdue`. `render.js` — HTML-рахунок (рядкова конкатенація) | Живий |
 | `lib/customers/` | CRUD клієнтів, (де)активація (відмова, якщо є відкриті рахунки, без `force`), валідація ЄДРПОУ з контрольною цифрою (старі записи не перевіряються повторно), пошук за назвою/контактом, рахунки клієнта з оплатами | Живий. **`merge.js` (`planMerge`)** викликають лише тести; `bin/merge-customers.js` з TODO так і не з'явився |
 | `lib/orders/` | Створення замовлень (`ORD-YYYY-NNNN`, для старих замовлень номер виводиться з id), рядки зі знімком ціни, машина статусів `new→confirmed→invoiced→shipped→closed` / `cancelled`; `invoiced` ставить лише модуль рахунків | Живий |
@@ -131,7 +136,8 @@
 
 | Що | Де | Формат | Хто бачить |
 |---|---|---|---|
-| `formatDate` | `lib/format.js:28-34` | **`MM/DD/YYYY`**, хоча JSDoc каже «ISO» | Рахунок HTML (`lib/invoices/render.js:38-39`), нагадування (`lib/notifications/reminders.js:40,46`), **CSV «Облік-Плюс»** (колонки `DocDate`, `PayUntil` через `type: "Date"`, `lib/export/accounting.js:29-35`). Цей виклик не знайти пошуком за ім'ям `formatDate` |
+| `formatDate` | `lib/format.js:31-36` | **`MM/DD/YYYY`** (JSDoc до BILL-482 казав «ISO», виправлено в `a0e14b7`, `lib/format.js:29`) | Лише **CSV «Облік-Плюс»** (колонки `DocDate`, `PayUntil` через `type: "Date"`, `lib/export/accounting.js:29-35`). Цей виклик не знайти пошуком за ім'ям `formatDate`. До BILL-482 також рахунок і нагадування |
+| `formatDateUa` | `lib/format.js:41-46` | **`ДД.ММ.РРРР`** | Рахунок HTML (`lib/invoices/render.js:38-39`), нагадування (`lib/notifications/reminders.js:40,46`). Додано в BILL-482 (`a0e14b7`) |
 | `formatMoney` | `lib/format.js` | `1 234,50 грн` | Рахунок, нагадування |
 | `formatDecimal` | `lib/format.js` | `1234.50` | CSV «Облік-Плюс» (`type: "Decimal"`) |
 | `formatText` | `lib/format.js` | прибирає `;`, переноси рядків | CSV «Облік-Плюс» (`type: "Text"`) |
@@ -173,7 +179,7 @@
 | 3 | Порт 8080, не 3000 (ARCHITECTURE.md: 3000) | ✅ | `config/default.json:7` → `"port": 8080`; `server.js:38` |
 | 4 | 26 HTTP-маршрутів (25 модульних + `/health`) | ✅ | `node -e` зі сумою довжин `require("./lib/<m>/routes")` → `25 + /health = 26` |
 | 5 | `/api/*` вимагає `x-staff-id`, `/invoices/:number` і `/health` — ні | ✅ | `lib/http/router.js:101`. На живому сервері (`createServer().listen(0)`): `/api/invoices` без заголовка → 401, із `x-staff-id: 7` → 200; `/invoices/INV-2026-00007` → 200; `/health` → 200 |
-| 6 | `formatDate` видає `MM/DD/YYYY`, хоча JSDoc каже «ISO» (ARCHITECTURE.md: «дати передаються в ISO 8601») | ✅ | `lib/format.js:27,33`. `node -e 'console.log(require("./lib/format").formatDate("2026-03-09"))'` → `03/09/2026` |
+| 6 | `formatDate` видає `MM/DD/YYYY`, хоча JSDoc каже «ISO» (ARCHITECTURE.md: «дати передаються в ISO 8601») | ✅ | `lib/format.js:27,33`. `node -e 'console.log(require("./lib/format").formatDate("2026-03-09"))'` → `03/09/2026`. _Стан на час Task A (до BILL-482). Після `a0e14b7` JSDoc каже `MM/DD/YYYY` (`lib/format.js:29`), функція — `:31-36`; вихід той самий._ |
 | 7 | CSV «Облік-Плюс» отримує дату з `formatDate` через динамічний виклик, а пошук за іменем цього не показує | ✅ | `lib/export/accounting.js:30` (`format['format' + col.type]`), `config/export-columns.json:3-4` (`"type": "Date"`). Прогін `buildAccountingFile` на фікстурах → `INV-2026-00001;03/01/2026;03/15/2026;…;5793.00\r`. `grep -n formatDate lib/export/accounting.js` → нічого |
 | 8 | Формат CSV: `;`, CRLF, суми `1234.50`, без чернеток (ARCHITECTURE.md: «Бухгалтерія забирає CSV вручну», «тільки SMTP») | ✅ | `lib/export/accounting.js:12-13` (SEP, EOL), `:52` (фільтр `draft`); вихід прогону в № 7. У фікстурах чернеток 0, тож фільтр на них не перевірено |
 | 9 | Дату `MM/DD/YYYY` вимагає сам «Облік-Плюс»; рядок з іншою датою він мовчки пропускає | ⚠️ не перевіряється в репо | Єдине джерело — `app/docs/integrations/oblik-plus.md:23,29-31`; у коді цей контракт ніде не записаний (`grep -rn "MM/DD" lib bin config` → нічого). Код із документом узгоджений (№ 7), але саме твердження про зовнішню систему не перевірене. У № 1-3 документація виявилась застарілою, тож перед Task C це треба підтвердити в бухгалтерії |
