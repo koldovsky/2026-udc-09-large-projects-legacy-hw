@@ -71,6 +71,24 @@ test('formatDate: empty and broken input give an empty string', function () {
   assert.equal(format.formatDate(new Date('x')), '');
 });
 
+// Task E: the goldens only ever feed formatDateUa valid dates, so these pin
+// its edge cases directly (mutants U5, U6 in docs/task-e-bonus.md).
+test('formatDateUa: DD.MM.YYYY in UTC', function () {
+  assert.equal(format.formatDateUa('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUa('2026-12-31'), '31.12.2026');
+  assert.equal(format.formatDateUa('2026-03-09T23:30:00+02:00'), '09.03.2026');
+  // 23:30 UTC is already the next day in Kyiv: must still be the UTC date
+  assert.equal(format.formatDateUa(new Date(Date.UTC(2026, 2, 9, 23, 30))), '09.03.2026');
+});
+
+test('formatDateUa: empty and broken input give an empty string', function () {
+  assert.equal(format.formatDateUa(''), '');
+  assert.equal(format.formatDateUa(null), '');
+  assert.equal(format.formatDateUa(undefined), '');
+  assert.equal(format.formatDateUa('not a date'), '');
+  assert.equal(format.formatDateUa(new Date('x')), '');
+});
+
 // --- consumer 1: HTML invoice over HTTP (GET /invoices/:number) -------------
 
 test('GET /invoices/INV-2026-00007 serves the golden HTML', async function (t) {
@@ -128,6 +146,17 @@ test('buildAccountingFile on the seed data matches the golden byte for byte', as
   var g = golden('oblik-export.json');
   var expected = g.lines.join(g.eol) + g.eol;
   assert.equal(accounting.buildAccountingFile(s.invoices, s.customersById), expected);
+});
+
+// Task E: the seed data has no drafts, so nothing pinned the draft filter
+// (mutant A1 in docs/task-e-bonus.md). A draft never reaches Облік-Плюс.
+test('Облік-Плюс file: draft invoices are left out', async function () {
+  var s = await seed();
+  var draft = Object.assign({}, s.invoices[0], { id: 9999, number: 'INV-2026-09999', status: 'draft' });
+  var g = golden('oblik-export.json');
+  var csv = accounting.buildAccountingFile(s.invoices.concat([draft]), s.customersById);
+  assert.equal(csv.indexOf('INV-2026-09999'), -1);
+  assert.equal(csv, g.lines.join(g.eol) + g.eol);
 });
 
 test('Облік-Плюс file: DocDate and PayUntil are MM/DD/YYYY of issued_at / due_at', async function () {
