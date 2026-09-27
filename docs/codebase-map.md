@@ -67,7 +67,7 @@
 | Точка входу | Що запускає | Файл |
 |---|---|---|
 | HTTP, `npm start` | Сервер на `node:http` + власний роутер, порт `config.server.port` = 8080 (або `$PORT`). Кожен модуль реєструє масив `{method, path, handler}`; відсутній модуль тихо пропускається (`MODULE_NOT_FOUND`) | `server.js`, `lib/http/router.js` |
-| HTTP: автентифікація | Маршрути, що починаються з `/api/`, вимагають заголовок `x-staff-id` (інакше 401); його ставить reverse proxy після LDAP **(коментар)**. `/invoices/:number` і `/health` — без перевірки | `lib/http/router.js:100-101` |
+| HTTP: автентифікація | Маршрути, що починаються з `/api/`, вимагають заголовок `x-staff-id`, який `Number()` перетворює на ненульове число (інакше 401; `-5`, `1.5` теж проходять). Походження заголовка код не перевіряє; те, що його ставить reverse proxy після LDAP, відомо лише з коментаря `lib/http/router.js:92-93` **(коментар)**. `/invoices/:number` і `/health` — без перевірки | `lib/http/router.js:100-101` |
 | HTTP: рахунки | `GET /api/invoices`, `GET /api/invoices/:id`, `POST /api/orders/:id/invoice` (виставити рахунок із підтвердженого замовлення), `GET /invoices/:number` (HTML-рахунок) | `lib/invoices/routes.js` |
 | HTTP: клієнти | `GET/POST /api/customers`, `GET/PATCH /api/customers/:id`, `GET /api/customers/:id/invoices`; DELETE немає навмисно | `lib/customers/routes.js` |
 | HTTP: каталог | `GET /api/products`, `GET /api/products/:id` (id або SKU), `POST /api/products/price-import`, `GET /api/stock/low` | `lib/catalog/routes.js` |
@@ -101,7 +101,7 @@
 | `lib/reports/` | Виручка по місяцях, дебіторка (вік рахується від `issued_at`), топ клієнтів, ПДВ; текстові таблиці й JSON; власні дати (UTC, лише ISO) | Живий: HTTP + `bin/monthly-report.js` |
 | `lib/audit/` | Аудит-лог JSONL `out/audit.log`, архів `out/audit-archive/YYYY-MM.jsonl`, ротація, запити | Читання й ротація живі, **запис мертвий**: `audit.record()` ніхто в `lib/`, `bin/` і `server.js` не викликає, хоча коментар у `routes.js` каже, що модулі пишуть самі |
 | `lib/export/accounting.js` | Нічний CSV для «Облік-Плюс». Колонки задає `config/export-columns.json`; форматер обирається **динамічно**: `format['format' + col.type]` (`Text`/`Date`/`Decimal`) | Живий (cron) |
-| `lib/notifications/reminders.js` | Листи-нагадування: за `config.reminders.daysBeforeDue` = 3 дні до строку, а також після прострочення. ~~«один раз після прострочення»~~ **Правка після перевірки (№ 11):** прапорці `overdue_reminded`/`upcoming_reminded` лише читаються, ніхто їх не записує, тож прострочене нагадування повторюється щодня | Живий (cron) |
+| `lib/notifications/reminders.js` | Листи-нагадування: за `config.reminders.daysBeforeDue` = 3 дні до строку, а також після прострочення. ~~«один раз після прострочення»~~ **Правка після перевірки (№ 11):** прапорці `overdue_reminded`/`upcoming_reminded` лише читаються, ніхто їх не записує, тож кожен запуск `bin/send-reminders.js` знову надсилає ті самі листи про прострочення. Частота запуску в репо не підтверджена: за коментарем `bin/send-reminders.js:3` — 09:00 у робочі дні **(коментар)** | Живий (cron **(коментар)**) |
 | `lib/discounts/` | Знижки постійного клієнта (рівні standard/legacy) | **Мертвий**: ніхто не імпортує, «відключений у 2023» **(коментар)**. Прапорець `features.loyaltyDiscounts` читає лише цей модуль |
 | `lib/legacy/templates.js` | Власний міні-Handlebars, хелпери `money`, `date` | **Мертвий**: теки `app/templates/` немає, використовує лише `pdf-client.js` і тести |
 | `lib/legacy/pdf-client.js` | Клієнт сервісу `pdf-render` | **Мертвий**: сервіс вимкнено у 2020 **(коментар)**, ніхто не імпортує |
@@ -161,7 +161,7 @@
 | Старий адмін-UI / екрани замовлень | Вихід: JSON API | Напр. `outstanding` як `"5793.00"`, `next_statuses` | `lib/customers/index.js:31`, `lib/orders/index.js:80-81` |
 | Банк («Банк Вигаданий», KB-2) | Вхід: виписка (CLI або `POST /api/payments/import`) | Fixed-width, дати `DDMMYYYY`, суми в копійках, дедуплікація за `bank_ref` | `lib/payments/statement.js` |
 | Відділ закупівель | Вхід: прайс-файл | `sku;ціна_грн[;примітка]`, кома або крапка | `lib/catalog/price-import.js` |
-| Reverse proxy + LDAP | Вхід: заголовок `x-staff-id` | Число | `lib/http/router.js:91-101` |
+| Reverse proxy + LDAP **(коментар)** | Вхід: заголовок `x-staff-id` | Будь-яке значення, ненульове після `Number()`; походження не перевіряється | Лише коментар `lib/http/router.js:92-93`; у репо не підтверджено. Перевірка значення — `:100-101` |
 | `pdf-render`, MongoDB | — | Вимкнені у 2020, лишився мертвий код у `lib/legacy/` | коментарі в `lib/legacy/*` |
 
 ## 3. Перевірка — щонайменше 10 тверджень

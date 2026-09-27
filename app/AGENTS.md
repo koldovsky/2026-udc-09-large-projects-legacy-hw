@@ -62,8 +62,9 @@ CSV «Облік-Плюс» байт у байт.
   (виправлено в BILL-482).
 - «Overdue reminder **once**» (`lib/notifications/reminders.js:2`, назва тесту
   в `test/reminders.test.js:13`) — неправда: `overdue_reminded` /
-  `upcoming_reminded` лише читаються, **ніхто їх не записує**, тож прострочене
-  нагадування йде щодня.
+  `upcoming_reminded` лише читаються, **ніхто їх не записує**, тож кожен запуск
+  `bin/send-reminders.js` знову надсилає ті самі листи про прострочення
+  (як часто його запускають, у репо не видно — лише коментар `:3`).
 - «Entries are written by the modules themselves» (`lib/audit/routes.js:2-3`) —
   `audit.record()` не викликає ніхто; аудит-лог порожній.
 - Мертвий код: `lib/discounts/*` (і прапорець `loyaltyDiscounts`),
