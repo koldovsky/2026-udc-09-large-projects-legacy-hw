@@ -78,6 +78,41 @@
 модуля або за динамічним доступом `format[...]` і з урахуванням
 `config/export-columns.json`.
 
+**Контрольна перевірка, що нікого не пропущено.** Два методи, незалежні від
+текстового пошуку вище. Обидва дали ті самі 4 споживачі.
+
+1. **Статично: граф `require`.** Скрипт пройшов усі `require` у `server.js`,
+   `lib/**` і `bin/*`, зокрема динамічний `require(m)` у `server.js:24`
+   (список модулів маршрутів `server.js:10-18`), і знайшов усі модулі, з яких
+   можна дістатися до `lib/format.js`.
+   - Точки входу, що **доходять** до `format.js`: `server.js` (через
+     `lib/invoices/routes.js` → `lib/invoices/render.js`),
+     `bin/nightly-export.js`, `bin/render-invoice.js`, `bin/send-reminders.js`.
+   - Точки входу, що **не доходять**: `bin/monthly-report.js`,
+     `bin/import-statement.js`, `bin/fix-2022-duplicate-customers.js`,
+     `lib/audit/retention.js`, `lib/legacy/mongo-migrate.js`.
+   - Єдиний динамічний доступ до модуля:
+     `format['format' + col.type]` (`lib/export/accounting.js:30`).
+2. **Динамічно: трасування викликів.** У копії `app/` поза репо
+   `formatDate` підмінювався через `NODE_OPTIONS=--require` на обгортку, яка
+   записує стек викликів. Потім запускались **усі** точки входу: 26
+   HTTP-маршрутів справжнього сервера (GET, POST, PATCH з валідними тілами) і
+   9 скриптів (`bin/*` включно з `--apply` / `--json`,
+   `lib/audit/retention.js`, `lib/legacy/mongo-migrate.js`).
+
+   | Точка входу | Хто викликав `formatDate` | Споживач |
+   |---|---|---|
+   | `GET /invoices/:number` | `lib/invoices/render.js:38,39` ← `lib/invoices/routes.js:34` | № 1 |
+   | `bin/render-invoice.js` | `lib/invoices/render.js:38,39` ← `bin/render-invoice.js:22` | № 2 |
+   | `bin/send-reminders.js` | `lib/notifications/reminders.js:40` і `:46` ← `buildReminders` | № 3 |
+   | `bin/nightly-export.js` | `lib/export/accounting.js:34` (`render(...)` у `cell()`), двічі на рахунок | № 4 |
+   | решта 25 маршрутів і 5 скриптів | жодного виклику | — |
+
+   Трасування бачить лише ті шляхи, що виконались; решту закриває статичний
+   граф: інші точки входу до `format.js` не доходять узагалі. Усі записи
+   (експорт, листи, імпорт оплат, аудит) робились лише в копії, яку потім
+   видалено; `app/data/` і `app/out/` у репо не змінювались.
+
 **Покриття тестами зараз** (для пункту 2):
 
 | Що | Чи зафіксовано |
