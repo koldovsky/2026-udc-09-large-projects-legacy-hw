@@ -46,8 +46,9 @@
 - Звіти JSON — BI-таблиця (`lib/reports/render.js:2-3`, коментар); текст
   місячного звіту вставляють у Excel: два пробіли між колонками, без табуляцій
   (`lib/reports/table.js:5-6`).
-- Листи: `bin/send-reminders.js` лише пише `out/mail/*.txt`, відправляє їх
-  старий SMTP-relay, коду якого в репо немає.
+- Листи: `bin/send-reminders.js` лише пише `out/mail/*.txt` (черга). Що їх
+  забирає й відправляє старий SMTP-relay, відомо лише з коментаря `:3-4`;
+  коду relay у репо немає.
 
 Перш ніж міняти форматування, запусти
 `test/characterization/date-consumers.test.js`: він фіксує рахунок, листи й
@@ -63,8 +64,9 @@ CSV «Облік-Плюс» байт у байт.
 - «Overdue reminder **once**» (`lib/notifications/reminders.js:2`, назва тесту
   в `test/reminders.test.js:13`) — неправда: `overdue_reminded` /
   `upcoming_reminded` лише читаються, **ніхто їх не записує**, тож кожен запуск
-  `bin/send-reminders.js` знову надсилає ті самі листи про прострочення
-  (як часто його запускають, у репо не видно — лише коментар `:3`).
+  `bin/send-reminders.js` знову створює й ставить у чергу (`out/mail/*.txt`)
+  ті самі нагадування про прострочення. Чи відправляє їх SMTP-relay і як часто
+  запускають скрипт, у репо не видно — лише коментар `:3-4`.
 - «Entries are written by the modules themselves» (`lib/audit/routes.js:2-3`) —
   `audit.record()` не викликає ніхто; аудит-лог порожній.
 - Мертвий код: `lib/discounts/*` (і прапорець `loyaltyDiscounts`),
