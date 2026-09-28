@@ -30,6 +30,16 @@ function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
+}
+
+/**
+ * Date for machine consumers that expect MM/DD/YYYY (Oblik-Plus export).
+ */
+function formatDateExport(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
 }
 
@@ -75,6 +85,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateExport: formatDateExport,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

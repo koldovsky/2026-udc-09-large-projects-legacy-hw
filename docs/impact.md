@@ -31,7 +31,7 @@
 | `app/test/characterization.test.js` — «reminder body contains due date in current format» | Дата в тексті нагадування | Так |
 | `app/test/characterization.test.js` — «accounting CSV contains dates in MM/DD/YYYY» | Дати в CSV для «Облік-Плюс» | Так |
 
-Коміт із тестами (до зміни): _(заповнюється після коміту)_
+Коміт із тестами (до зміни): `145f721`
 
 ## 5. Після зміни (Task C)
 
