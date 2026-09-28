@@ -1,6 +1,13 @@
 # Аналіз впливу — BILL-482
 
 > Task B. Заповнюється **до** зміни коду.
+>
+> Розділи 1-4 описують стан **до** BILL-482 (коміт з тестами `ac903d4`), і
+> номери рядків у них — на той момент. Після зміни в `app/lib/format.js`
+> з'явилась `formatDateUa`, тож рядки зсунулись (`formatDate` тепер `:31-36`),
+> а рахунок і листи беруть дату з неї. Поточний стан — розділ 5.
+> Позначки **(коментар)** / **(документ)** — твердження, яке в коді не
+> перевіряється, а взяте з коментаря чи з `app/docs/`.
 
 ## 1. Що саме змінюється
 
@@ -16,9 +23,9 @@
 | # | Споживач (файл) | Як дістається до зміненої поведінки | Хто читає результат: людина чи інша система | Що з ним має статися після тікета |
 |---|---|---|---|---|
 | 1 | HTML-рахунок через HTTP: `GET /invoices/:number` (`app/lib/invoices/routes.js:28-37`, маршрут `:63`) | Прямий виклик: `render.renderInvoiceHtml()` → `format.formatDate(invoice.issued_at)` і `format.formatDate(invoice.due_at)` (`app/lib/invoices/render.js:38-39`). Маршрут поза `/api/`, тож `x-staff-id` не потрібен (`app/lib/http/router.js:101`) | **Людина**: клієнт або менеджер у браузері. Сторінку тікет називає прямо (`/invoices/INV-2026-00007`) | **Змінитись**: «Дата» і «Сплатити до» → `дд.мм.рррр`. Це і є баг з тікета |
-| 2 | HTML-рахунок через CLI: `bin/render-invoice.js` (`app/bin/render-invoice.js:22`) | Транзитивно: та сама `render.renderInvoiceHtml()` → `formatDate` (`render.js:38-39`); stdout перенаправляють у `invoice.html` (`render-invoice.js:3`) | **Людина**: той самий документ-рахунок, який потім відкривають або пересилають | **Змінитись** разом із № 1: функція та сама, і це той самий документ для клієнта |
+| 2 | HTML-рахунок через CLI: `bin/render-invoice.js` (`app/bin/render-invoice.js:22`) | Транзитивно: та сама `render.renderInvoiceHtml()` → `formatDate` (`render.js:38-39`); вихід іде в stdout (приклад у коментарі `render-invoice.js:3`: `> invoice.html`) | **Людина**: той самий HTML-документ рахунку. Що з файлом роблять далі, у репо не видно | **Змінитись** разом із № 1: функція та сама, і це той самий документ для клієнта |
 | 3 | Листи-нагадування: `bin/send-reminders.js` (cron 09:00 **(коментар)**) → `app/out/mail/<дата>-<kind>-<id>.txt` | Транзитивно: `send-reminders.js:20` → `reminders.buildReminders()` → `body()` → `format.formatDate(invoice.due_at)` в обох варіантах листа: прострочення (`app/lib/notifications/reminders.js:40`) і «нагадуємо» (`:46`). Тема листа (`subject`, `:26-30`) дати не містить | **Людина**: клієнт. SMTP-relay забирає файли з теки й відправляє (`send-reminders.js:3-4` **(коментар)**); коду relay у репо немає, тож те, що текст не змінюється, — припущення | **Змінитись**: «сплатити до 03/12/2026» → «сплатити до 12.03.2026». Про це прямо просить тікет |
-| 4 | Нічний CSV для «Облік-Плюс»: `bin/nightly-export.js` (cron 02:30 **(коментар)**) → `app/out/export/oblik-YYYY-MM-DD.csv` | **Не за іменем, а динамічно.** `nightly-export.js:25` → `accounting.buildAccountingFile()` → `cell()` → `format['format' + col.type]` (`app/lib/export/accounting.js:29-35`). Для колонок `DocDate` (`issued_at`) і `PayUntil` (`due_at`) у `app/config/export-columns.json:3-4` стоїть `"type": "Date"`, тобто викликається `formatDate`. У файлі `accounting.js` слова `formatDate` немає | **Інша система**: «Облік-Плюс» забирає файл сам о 06:00 і приймає лише `MM/DD/YYYY` (`app/docs/integrations/oblik-plus.md:23`) | **Лишитись як є**, байт у байт. Рядок з іншою датою «Облік-Плюс» не відхиляє, а **мовчки пропускає**: у лютому 2021 так «зникли» 40 рахунків (`oblik-plus.md:29-35`). Бухгалтерію треба попереджати щонайменше за тиждень (`oblik-plus.md:42-43`). Контракт відомий лише з цього документа (див. `docs/codebase-map.md`, № 9) |
+| 4 | Нічний CSV для «Облік-Плюс»: `bin/nightly-export.js` (cron 02:30 **(коментар)**) → `app/out/export/oblik-YYYY-MM-DD.csv` | **Не за іменем, а динамічно.** `nightly-export.js:25` → `accounting.buildAccountingFile()` → `cell()` → `format['format' + col.type]` (`app/lib/export/accounting.js:29-35`). Для колонок `DocDate` (`issued_at`) і `PayUntil` (`due_at`) у `app/config/export-columns.json:3-4` стоїть `"type": "Date"`, тобто викликається `formatDate`. У файлі `accounting.js` слова `formatDate` немає | **Інша система**: «Облік-Плюс» забирає файл сам о 06:00 (коментар `bin/nightly-export.js:4`) і приймає лише `MM/DD/YYYY` (`app/docs/integrations/oblik-plus.md:23`) **(документ)** | **Лишитись як є**, байт у байт. Рядок з іншою датою «Облік-Плюс» не відхиляє, а **мовчки пропускає**: у лютому 2021 так «зникли» 40 рахунків (`oblik-plus.md:29-35`). Бухгалтерію треба попереджати щонайменше за тиждень (`oblik-plus.md:42-43`). Контракт відомий лише з цього документа (див. `docs/codebase-map.md`, № 9) |
 
 **Пастки поруч зі зміною:**
 

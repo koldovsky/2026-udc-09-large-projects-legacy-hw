@@ -1,8 +1,10 @@
 # AGENTS.md — prykladpostach-billing
 
 Прочитай **до** того, як щось міняти. Тут лише те, чого не видно з коду
-напряму або що код і коментарі кажуть неправильно. Усе перевірено по коду
-(докази: `../docs/codebase-map.md`, `../docs/impact.md`).
+напряму або що код і коментарі кажуть неправильно. Перевірено по коду
+(докази: `../docs/codebase-map.md`, `../docs/impact.md`), крім позначеного
+**(коментар)** / **(документ)**: це взято з коментаря чи з `docs/`, і в коді
+не перевіряється.
 
 Швидко: plain Node 22, CommonJS, колбеки, **жодних npm-залежностей**.
 `npm test` (вбудований `node --test`). Не переписуй на ESM/async, не
@@ -11,8 +13,8 @@
 ## Контракти з іншими системами — не ламати
 
 **«Облік-Плюс» (бухгалтерія), найризикованіше місце.**
-`bin/nightly-export.js` → `lib/export/accounting.js` → `out/export/oblik-YYYY-MM-DD.csv`,
-файл забирає їхній сервер о 06:00.
+`bin/nightly-export.js` → `lib/export/accounting.js` → `out/export/oblik-YYYY-MM-DD.csv`;
+файл забирає їхній сервер о 06:00 **(коментар `bin/nightly-export.js:4`)**.
 
 - Функцію форматування клітинки обирає **рядок з конфігу**:
   `format['format' + col.type]` (`lib/export/accounting.js:30`), типи — у
@@ -21,7 +23,7 @@
   функції цього споживача не знаходить.**
 - `formatDate` (`lib/format.js:31`) має лишатися `MM/DD/YYYY`. Рядок з іншою
   датою «Облік-Плюс» **мовчки пропускає**, без помилки ні в нас, ні в них: так
-  у 2021 році «зникли» 40 рахунків (`docs/integrations/oblik-plus.md`).
+  у 2021 році «зникли» 40 рахунків **(документ `docs/integrations/oblik-plus.md`)**.
 - Не перейменовуй і не прибирай `formatDate` / `formatDecimal` / `formatText`
   з `module.exports`: експорт упаде з `unknown column type`. Будь-яка нова
   функція `formatXxx` автоматично стає допустимим типом колонки.
@@ -40,12 +42,12 @@
 
 **Інші виходи, які читають машини або Excel** (перевірено: від `format.js` не
 залежать):
-- JSON `/api/*` — старий адмін-UI; напр. `totals.outstanding` у
-  `GET /api/customers/:id/invoices` — рядок `"5793.00"`
-  (`lib/customers/index.js:32,221`), не число.
-- Звіти JSON — BI-таблиця (`lib/reports/render.js:2-3`, коментар); текст
-  місячного звіту вставляють у Excel: два пробіли між колонками, без табуляцій
-  (`lib/reports/table.js:5-6`).
+- JSON `/api/*` — старий адмін-UI **(коментар `lib/customers/index.js:31`)**;
+  з коду: `totals.outstanding` у `GET /api/customers/:id/invoices` — рядок
+  `"5793.00"` (`lib/customers/index.js:32,221`), не число.
+- Звіти JSON — BI-таблиця **(коментар `lib/reports/render.js:2-3`)**; текст
+  місячного звіту вставляють у Excel **(коментар `lib/reports/table.js:5-6`)**,
+  тож з коду: два пробіли між колонками, без табуляцій.
 - Листи: `bin/send-reminders.js` лише пише `out/mail/*.txt` (черга). Що їх
   забирає й відправляє старий SMTP-relay, відомо лише з коментаря `:3-4`;
   коду relay у репо немає.
@@ -68,7 +70,8 @@ CSV «Облік-Плюс» байт у байт.
   ті самі нагадування про прострочення. Чи відправляє їх SMTP-relay і як часто
   запускають скрипт, у репо не видно — лише коментар `:3-4`.
 - «Entries are written by the modules themselves» (`lib/audit/routes.js:2-3`) —
-  `audit.record()` не викликає ніхто; аудит-лог порожній.
+  `audit.record()` не викликає ніхто, тож застосунок в аудит-лог нічого не
+  пише (що лежить у файлі на сервері, з репо не видно).
 - Мертвий код: `lib/discounts/*` (і прапорець `loyaltyDiscounts`),
   `lib/legacy/templates.js`, `lib/legacy/pdf-client.js` (теки `templates/`
   немає), `lib/customers/merge.js`; `features.newAgingBuckets` не читає ніхто.

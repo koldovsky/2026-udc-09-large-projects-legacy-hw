@@ -1,6 +1,8 @@
 /**
- * Characterization tests for BILL-482: pin the CURRENT output of everything
- * that goes through lib/format.js formatDate (see docs/impact.md, section 2).
+ * Characterization tests for BILL-482: pin the output of everything that went
+ * through lib/format.js formatDate before the change (see docs/impact.md,
+ * section 2). Since BILL-482 the invoice and the reminders use formatDateUa,
+ * the Облік-Плюс export still uses formatDate.
  *
  * Golden files in ./golden were captured from the unchanged code. After
  * BILL-482 only the dates in the three human-facing ones (invoice, reminders)
