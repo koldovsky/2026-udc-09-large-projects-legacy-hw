@@ -21,7 +21,7 @@ function toDate(value) {
 }
 
 /**
- * Format a date for display.
+ * Date for the Oblik-Plus accounting export: MM/DD/YYYY.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
  * @returns {string} MM/DD/YYYY. The Oblik-Plus export reads this format
