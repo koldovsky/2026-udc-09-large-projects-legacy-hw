@@ -2,6 +2,12 @@
 
 > Task A. Карту згенерував агент, потім кожне твердження з розділу 3 перевірене
 > по коду або командою.
+>
+> **Це знімок стартового коду `7ada5a0`** (до BILL-482). Після Task B/C змінилось:
+> тестів 114 замість 106 (п. 16). `formatDate` тепер має правильний JSDoc
+> («для машин», `MM/DD/YYYY`), тож цитата старого JSDoc у п. 1 стосується `7ada5a0`.
+> Рахунок і листи тепер беруть дати з `formatDateUa` (`дд.мм.рррр`), а
+> `formatDate` лишився тільки в CSV «Облік-Плюс». Деталі в `docs/impact.md`, розділ 5.
 
 ## 1. Як агент будував карту
 
@@ -56,7 +62,7 @@
 | CLI вручну | Рахунок у HTML у stdout | `bin/render-invoice.js` → `lib/invoices/render.js` |
 | CLI одноразовий | Фікс дублікатів клієнтів 2022. **НЕ ЗАПУСКАТИ** | `bin/fix-2022-duplicate-customers.js` |
 | CLI одноразовий | Міграція MongoDB → JSON, 2020-11 | `lib/legacy/mongo-migrate.js` |
-| `npm test` | `node --test`, **106 тестів**, зелені | `test/**` |
+| `npm test` | `node --test`, **106 тестів** на `7ada5a0` (зараз **114**, див. п. 16), зелені | `test/**` |
 
 > ⚠️ **Розклади cron (02:30, 09:00, 07:00, 03:10), «забирає о 06:00», «SMTP-relay
 > забирає з `out/mail`» відомі лише з коментарів** (`bin/nightly-export.js:3-4`,
@@ -153,7 +159,7 @@
 | 13 | `x-staff-id` обов'язковий **лише** для `/api/*`; HTML-рахунок і `/health` публічні, хоча коментар каже «Anything without it is rejected» | ✅ | `app/lib/http/router.js:101`, коментар на `:92-93` |
 | 14 | `lib/discounts`, `lib/legacy/*`, `customers/merge.js` не підключаються жодним робочим кодом | ✅ | граф `grep "require('."` по `app/` без `test/`: на них посилань немає, крім `pdf-client → templates` всередині `legacy/` |
 | 15 | `audit.record()` ніхто не викликає, хоча коментар у роутах каже, що модулі пишуть через нього | ✅ | `grep "audit\.record\|require('../audit" app/lib` → лише коментар `audit/routes.js:3`; функція визначена `audit/index.js:114` |
-| 16 | 26 HTTP-маршрутів і 106 тестів, усі зелені | ✅ | `grep "method: '…', path:" app/lib` → 25 рядків, плюс `/health` (`server.js:29`); `node --test` → `tests 106, pass 106, fail 0` |
+| 16 | 26 HTTP-маршрутів і 106 тестів (на `7ada5a0`), усі зелені; **зараз 114** | ✅ | `grep "method: '…', path:" app/lib` → 25 рядків, плюс `/health` (`server.js:29`); на `7ada5a0` `node --test` → `tests 106, pass 106, fail 0`. **На поточному коді** `node --test` і `npm test` → `tests 114, pass 114, fail 0`: 106 засіяних + 8 з Task B/C (`test/characterization/bill-482.test.js`) |
 
 ### 3b. Твердження зі старої документації, які карта **не** повторила
 
