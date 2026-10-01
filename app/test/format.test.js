@@ -20,6 +20,15 @@ test('formatText: trims and strips separators', function () {
   assert.equal(format.formatText(undefined), '');
 });
 
+test('formatDateUa: DD.MM.YYYY in UTC, and nothing for empty or invalid input', function () {
+  assert.equal(format.formatDateUa('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUa('2026-03-09T23:30:00Z'), '09.03.2026');
+  assert.equal(format.formatDateUa(new Date(Date.UTC(2026, 2, 9))), '09.03.2026');
+  assert.equal(format.formatDateUa(''), '');
+  assert.equal(format.formatDateUa(null), '');
+  assert.equal(format.formatDateUa('not a date'), '');
+});
+
 test('formatPercent', function () {
   assert.equal(format.formatPercent(20), '20%');
 });
