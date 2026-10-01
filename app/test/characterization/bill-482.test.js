@@ -60,6 +60,16 @@ test('formatDate: current output for every input shape', function () {
   assert.equal(format.formatDate('not a date'), '');
 });
 
+test('formatDateUa: dd.mm.yyyy for people (BILL-482)', function () {
+  assert.equal(format.formatDateUa('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUa('2026-12-31'), '31.12.2026');
+  assert.equal(format.formatDateUa('2026-03-09T23:30:00+02:00'), '09.03.2026');
+  assert.equal(format.formatDateUa(new Date(Date.UTC(2026, 2, 9))), '09.03.2026');
+  assert.equal(format.formatDateUa(''), '');
+  assert.equal(format.formatDateUa(null), '');
+  assert.equal(format.formatDateUa('not a date'), '');
+});
+
 // --- consumer 1: invoice HTML, read by customers ---------------------------
 
 test('invoice HTML for INV-2026-00007 (the one from the ticket)', function (t, done) {
