@@ -139,7 +139,7 @@ run inside the copy). No file in the repository was edited.
 Under the first mutant no seeded test failed for the CSV, which Oblik-Plus would have skipped
 row by row; only the new CSV tests catch that change.
 
-Commit with the tests (before the change): `<hash>`
+Commit with the tests (before the change): `9435413`
 
 ## 5. After the change (Task C)
 
