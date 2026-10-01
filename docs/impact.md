@@ -1,6 +1,7 @@
 # Impact analysis — BILL-482
 
-> Task B. Written before the code change.
+> Sections 1-4 are Task B, written before the code change; their line references are to commit
+> `9435413`. Section 5 is Task C, written after the change.
 
 ## 1. What changes
 
@@ -148,8 +149,12 @@ customers read move to a new function.
 
 - `app/lib/format.js`: new `formatDateUa` returns `DD.MM.YYYY`. It takes the same input as
   `formatDate` (a `YYYY-MM-DD` string or a `Date`, read in UTC) and returns an empty string for
-  empty or invalid input. The code of `formatDate` is unchanged. Its doc comment said ISO; it
-  now says `MM/DD/YYYY` and that the Oblik-Plus export reads that format.
+  empty or invalid input. The code of `formatDate` is unchanged. Its doc comment said "Format a
+  date for display" and ISO; it now says the function writes the Oblik-Plus export date,
+  `MM/DD/YYYY`, and that customer dates go through `formatDateUa`. This doc comment is the only
+  change the ticket did not ask for. It was changed because the old comment hid the export
+  contract: a reader who trusts it sees a display helper with no machine consumer, which is the
+  reading behind the "one function" fix.
 - `app/lib/invoices/render.js:38-39` and `app/lib/notifications/reminders.js:40`, `:46`:
   `formatDate` replaced by `formatDateUa`. Four calls, no other line in these files.
 - `app/lib/export/accounting.js` and `app/config/export-columns.json` are not touched. The
@@ -157,7 +162,10 @@ customers read move to a new function.
 
 Because the export looks up its helper by type, every function exported from `lib/format.js` is
 a valid column type, so `DateUa` now is one too. No column uses it, and the column types must not
-change (`app/docs/integrations/oblik-plus.md:12-13`).
+change (`app/docs/integrations/oblik-plus.md:12-13`). Re-typing a date column to `DateUa` is
+caught by the existing tests. With `issued_at` re-typed to `DateUa` in
+`app/config/export-columns.json:3` of a temporary copy of `app/` (the method used for the
+section 4 mutants), 2 tests failed, both Oblik-Plus CSV tests, and 113 passed.
 
 The alternative was to change `formatDate` itself and keep the export on `MM/DD/YYYY` with a
 special case in `accounting.js`. Today's output would be the same, but the change would edit the
