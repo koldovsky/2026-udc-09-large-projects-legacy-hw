@@ -84,6 +84,30 @@ test('MUST-NOT-CHANGE formatDate reads the date in UTC, never local time', funct
   assert.equal(format.formatDate('2026-03-09T23:59:59+03:00'), '03/09/2026');
 });
 
+// Added after mutation testing (Task E): the two assertions above pass even if
+// the formatters are switched from getUTC* to local getters, because this host
+// runs at a POSITIVE UTC offset (EEST, +0300). On a machine west of Greenwich
+// the same mutant shifts every date back one day — 09.03.2026 becomes
+// 08.03.2026 on the invoice, and the Облік-Плюс export books the wrong day.
+// Run the formatters in a child process with an explicit TZ so the test means
+// the same thing on every developer machine and CI runner.
+test('MUST-NOT-CHANGE both formatters are UTC-only, whatever the host timezone', function () {
+  var execFileSync = require('node:child_process').execFileSync;
+  var path = require('node:path');
+  var formatPath = path.join(__dirname, '..', '..', 'lib', 'format.js');
+  var script =
+    'var f = require(' + JSON.stringify(formatPath) + ');' +
+    "process.stdout.write(f.formatDate('2026-03-09') + ' ' + f.formatDateUA('2026-03-09'));";
+
+  ['UTC', 'Europe/Kyiv', 'America/New_York', 'Pacific/Honolulu', 'Pacific/Kiritimati'].forEach(function (tz) {
+    var out = execFileSync(process.execPath, ['-e', script], {
+      env: Object.assign({}, process.env, { TZ: tz }),
+      encoding: 'utf8',
+    });
+    assert.equal(out, '03/09/2026 09.03.2026', 'TZ=' + tz);
+  });
+});
+
 // --- consumer 1: HTML invoice (human) --------------------------------------
 
 // CHANGED BY BILL-482 (was 03/09/2026 and 03/23/2026): this is the invoice the

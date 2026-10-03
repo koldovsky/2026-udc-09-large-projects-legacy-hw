@@ -11,7 +11,8 @@
 
   | Метрика | Значення |
   |---|---|
-  | Викликів інструментів усього | ~29 (Read, Bash/grep, Write) |
+  | Викликів інструментів на складання карти (Task A) | ~29 (Read, Bash/grep, Write) |
+  | Викликів за всю домашку (Task A–E, разом із мутаціями) | ~45 |
   | Файлів відкрито (усього в репо) | ~35 |
   | Файлів `app/` відкрито (з 86) | ~28 (**33 %**) |
   | Файлів `app/` **не** відкрито | ~58, зокрема весь `lib/customers/`, `lib/orders/`, `lib/payments/`, `lib/catalog/`, `lib/audit/`, `lib/discounts/`, `lib/legacy/mongo-migrate.js` і 22 з 26 тестів |
@@ -65,7 +66,7 @@
 | `lib/catalog/` | товари, імпорт цін, залишки | живий (не читано детально) |
 | `lib/reports/` | 4 звіти: revenue, aging, top-customers, vat; текст і JSON | живий (не читано детально) |
 | `lib/audit/` | журнал дій, retention | живий (не читано детально) |
-| `lib/discounts/` | знижки, тарифні рівні; `features.loyaltyDiscounts: false` | частково вимкнений фіча-флагом |
+| `lib/discounts/` | знижки, тарифні рівні | **осиротілий**: `grep -rln "discounts" app --include="*.js"` → лише `lib/discounts/index.js` і два його тести. З `lib/` і `bin/` не викликається ніхто. Прапорець `features.loyaltyDiscounts: false` тут ні до чого — модуль не підключений узагалі |
 | `lib/legacy/templates.js` | свій міні-Handlebars | **мертвий у рантаймі**: `templates/` видалено 2020 разом із PDF-сервісом; `compile()` лише в тестах |
 | `lib/legacy/pdf-client.js` | клієнт `pdf-render` | **мертвий**: сервіс вимкнено 11.2020; TODO на видалення з 2021-03 |
 | `lib/legacy/mongo-migrate.js` | міграція з Mongo | **мертвий** (не читано) |
@@ -103,7 +104,7 @@
 знайшли через три тижні по розбіжності ПДВ. Тестів на цей експорт у репо
 **не було жодного**.
 
-## 3. Перевірка — 18 тверджень
+## 3. Перевірка — 19 тверджень
 
 Перевіряв насамперед те, що збігається зі старою документацією
 (`app/docs/ARCHITECTURE.md`, версія 2.0 від травня 2019) — саме там агент
@@ -128,7 +129,8 @@
 | 15 | У `test/format.test.js` немає жодного тесту на `formatDate` | ✅ | [`test/format.test.js`](../app/test/format.test.js): 4 тести — money, decimal, text, percent. Дат немає |
 | 16 | Звіти (`lib/reports/*`) **не** залежать від `lib/format.js` | ✅ | `grep -rn "require(.*format" app/lib/reports/` → нічого; `reports/render.js` показує `issued_at`/`due_at` сирим ISO. Тобто тікет звітів не торкається |
 | 17 | 26 HTTP-маршрутів, 86 файлів, ~10 тис. рядків (root README) | ✅ | `grep -rh "{ method: '" app/lib \| wc -l` → 26; `find app -type f \| wc -l` → 86; усіх рядків 10 133 (з них `.js` — 7 337) |
-| 18 | «13 модулів» (root README) | ⚠️ | Тек у `lib/` — **12** (`ls -d app/lib/*/ \| wc -l`). 13 виходить, якщо долучити `lib/format.js` + `lib/store.js` як окремі модулі (тоді 14) або рахувати інакше. Дрібна неточність, але показова: число з README не сходиться з кодом |
+| 18 | `config/features.json` керує поведінкою проду | ❌ | Обидва ключі неживі. `newAgingBuckets: true` не читає **ніхто** (`grep -rn "newAgingBuckets" app` → лише сам `features.json`). `loyaltyDiscounts` читає тільки `lib/discounts/index.js:34`, а сам `lib/discounts/` не підключений ні з `lib/`, ні з `bin/` — лише зі своїх тестів. Класична пастка: прапорець виглядає як перемикач поведінки, а не є ним |
+| 19 | «13 модулів» (root README) | ⚠️ | Тек у `lib/` — **12** (`ls -d app/lib/*/ \| wc -l`). 13 виходить, якщо долучити `lib/format.js` + `lib/store.js` як окремі модулі (тоді 14) або рахувати інакше. Дрібна неточність, але показова: число з README не сходиться з кодом |
 
 ## 4. Висновок
 
