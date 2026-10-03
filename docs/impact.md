@@ -112,8 +112,69 @@
 щоб git не нормалізував CRLF у golden master — інакше тест, який фіксує CRLF,
 перевіряв би не те, що думає.
 
-Коміт із тестами (до зміни): `TBD-COMMIT-B`
+Коміт із тестами (до зміни): **`7fdd2f5`** — «WS9 Task B: characterization tests
+before the BILL-482 change». Зміна коду — в наступному коміті, тести не
+підганялись після.
 
 ## 5. Після зміни (Task C)
 
-Заповнюється в Task C.
+### Що зробили
+
+**`formatDate` не торкались.** Замість зміни спільної функції додали
+[`formatDateUA`](../app/lib/format.js) (`дд.мм.рррр`) і перевели на неї двох
+споживачів, що показують дату людям. Машинний експорт і далі викликає
+`formatDate` → `MM/DD/YYYY`, тому контракт із «Облік-Плюс» не зачеплений, а
+`config/export-columns.json` змінювати не довелось (типи колонок міняти
+заборонено: [`oblik-plus.md:13`](../app/docs/integrations/oblik-plus.md#L13)).
+
+Диф у проді — **3 файли, 4 функціональні рядки + одна нова функція**:
+
+| Файл | Зміна |
+|---|---|
+| [`lib/format.js`](../app/lib/format.js) | **+** `formatDateUA`; `formatDate` без змін у тілі; виправлено JSDoc, який брехав («the date in ISO format» → `MM/DD/YYYY`), і додано попередження про молчазне пропускання рядків у «Облік-Плюс» |
+| [`lib/invoices/render.js`](../app/lib/invoices/render.js) | 2 виклики `formatDate` → `formatDateUA` |
+| [`lib/notifications/reminders.js`](../app/lib/notifications/reminders.js) | 2 виклики `formatDate` → `formatDateUA` (гілки `overdue` і `upcoming`) |
+
+### Червоні тести і що з ними зробили
+
+Після зміни почервоніло **5** тестів із 123. Усі 5 — вихід для людей. **Жоден
+`MUST-NOT-CHANGE` і жоден тест експорту не почервонів.**
+
+| Тест | Почервонів? | Очікувано чи регресія? | Що зробили |
+|---|---|---|---|
+| `EXPECTED-TO-CHANGE invoice HTML shows both dates MM/DD/YYYY today` | так | **очікувано** — HTML-рахунок читає клієнт, це головний пункт тікета | очікування → `09.03.2026` / `23.03.2026`; перейменовано на `BILL-482 invoice HTML shows both dates as DD.MM.YYYY`; додано перевірку, що американської дати в HTML не лишилось |
+| `EXPECTED-TO-CHANGE upcoming reminder names the due date MM/DD/YYYY today` | так | **очікувано** — лист клієнту; тікет прямо його згадує | очікування → `23.03.2026` |
+| `EXPECTED-TO-CHANGE overdue reminder names the due date MM/DD/YYYY today` | так | **очікувано** — лист клієнту | очікування → `23.03.2026` |
+| `EXPECTED-TO-CHANGE the public HTML invoice route serves MM/DD/YYYY today` | так | **очікувано** — та сама сторінка `/invoices/INV-2026-00007` із тікета, end-to-end через `server.js` | очікування → `07.03.2026` / `21.03.2026` |
+| `rendered invoice shows number, customer, dates and totals` (**засіяний**, [`test/invoices.test.js:41-42`](../app/test/invoices.test.js#L41-L42)) | так | **очікувано** — єдиний засіяний тест, який фіксував американський формат у HTML-рахунку | очікування → `09.03.2026` / `23.03.2026`, з комментарем, що саме змінилось і чому |
+| `EXPECTED-TO-CHANGE formatDate renders MM/DD/YYYY today` | **ні** | — | Лишився зеленим, бо `formatDate` навмисно не змінювали. Перейменовано на `MUST-NOT-CHANGE formatDate stays MM/DD/YYYY — it is the Облік-Плюс wire format`: ярлик був поставлений до того, як вибрали рішення, і тепер він неправильний |
+
+Нових тестів на `formatDateUA` додано 3 (формат, граничні випадки, і перевірка,
+що `formatDate` та `formatDateUA` описують **ту саму** дату в різному порядку —
+щоб не можна було випадково переплутати день і місяць).
+
+### Чого не змінювали — хоча було спокусливо
+
+- **`formatDate` не перейменовували** на щось типу `formatDateOblik`, хоча назва
+  й вводить в оману. Від рядка `'format' + col.type` залежить
+  `lib/export/accounting.js`, а `col.type` = `"Date"` приходить із JSON-конфіга.
+  Перейменування функції зламало б експорт у рантаймі — і, що гірше, не на
+  тестах, а молча. Замість перейменування — попередження в JSDoc і запис у
+  [`app/AGENTS.md`](../app/AGENTS.md).
+- **`config/export-columns.json`** — не чіпали: типи колонок міняти заборонено.
+- **`lib/legacy/templates.js`** — не чіпали, хоча його хелпер `dmy` уже робить
+  `дд.мм.рррр`. Код мертвий (`templates/` видалено 2020), і «уніфікувати» його з
+  живим форматером — рефакторинг поза тікетом.
+- **Звіти** (`lib/reports/*`) — не чіпали: вони показують сирий ISO людям, але
+  тікет про рахунки й нагадування, а JSON-звіти тягне BI-таблиця.
+
+### Перевірка результату
+
+| Що перевіряли | Як | Результат |
+|---|---|---|
+| Уся сюїта | `cd app && npm test` | **126 тестів, 126 зелених** (106 засіяних + 20 наших) |
+| Вихід для машини не змінився | `node bin/nightly-export.js 2026-03-31`, потім `diff` з golden master, знятим **до** зміни | **файли ідентичні** |
+| HTML-рахунок змінився | `node bin/render-invoice.js INV-2026-00007` | `Дата: <b>07.03.2026</b> · Сплатити до: <b>21.03.2026</b>` |
+| Листи змінились | `node bin/send-reminders.js 2026-03-18` | «слід сплатити до **21.03.2026**.» (13 листів) |
+| `app/data/*.json` не змінено | `git diff --stat HEAD -- app/data/` | порожньо |
+| `app/out/` не закомічено | `app/out/` у `.gitignore`, тека видалена після перевірки | ок |

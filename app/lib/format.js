@@ -21,16 +21,41 @@ function toDate(value) {
 }
 
 /**
- * Format a date for display.
+ * Date for the «Облік-Плюс» accounting import — MM/DD/YYYY, because their
+ * server runs an American locale (docs/integrations/oblik-plus.md).
+ *
+ * DO NOT change this format and DO NOT use this for anything a customer reads
+ * (use formatDateUA for that). Their import does not fail on a date in another
+ * format — it SILENTLY SKIPS the row. That is how 40 invoices went missing in
+ * February 2021 with a green test suite.
+ *
+ * Reached from lib/export/accounting.js indirectly, as format['format' + type]
+ * where type is "Date" in config/export-columns.json — so a search for
+ * "formatDate" does not show that caller.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} the date as MM/DD/YYYY, or '' if there is no usable date
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Date for people — DD.MM.YYYY, the Ukrainian format (BILL-482).
+ *
+ * This is the one for invoices, mails and anything else a customer reads.
+ *
+ * @param {string|Date} value  YYYY-MM-DD string or a Date
+ * @returns {string} the date as DD.MM.YYYY, or '' if there is no usable date
+ */
+function formatDateUA(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +100,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUA: formatDateUA,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

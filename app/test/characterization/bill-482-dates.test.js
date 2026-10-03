@@ -36,11 +36,40 @@ var invoice = {
 
 // --- the shared formatter itself (had no test at all before BILL-482) -------
 
-test('EXPECTED-TO-CHANGE formatDate renders MM/DD/YYYY today', function () {
+// BILL-482 resolution: formatDate was NOT touched. It is the «Облік-Плюс» wire
+// format, so this test stayed green through the change and is relabelled from
+// EXPECTED-TO-CHANGE to MUST-NOT-CHANGE. The new customer-facing format lives in
+// formatDateUA, pinned just below.
+test('MUST-NOT-CHANGE formatDate stays MM/DD/YYYY — it is the Облік-Плюс wire format', function () {
   assert.equal(format.formatDate('2026-03-09'), '03/09/2026');
   assert.equal(format.formatDate('2026-12-03'), '12/03/2026');
   assert.equal(format.formatDate('2026-01-01'), '01/01/2026');
   assert.equal(format.formatDate(new Date('2026-03-09T00:00:00Z')), '03/09/2026');
+});
+
+test('BILL-482 formatDateUA renders DD.MM.YYYY for customers', function () {
+  assert.equal(format.formatDateUA('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUA('2026-12-03'), '03.12.2026');
+  assert.equal(format.formatDateUA('2026-01-01'), '01.01.2026');
+  assert.equal(format.formatDateUA(new Date('2026-03-09T00:00:00Z')), '09.03.2026');
+  // the ticket's own example: 03/09/2026 was being read as 3 September
+  assert.equal(format.formatDateUA('2026-03-09'), '09.03.2026');
+});
+
+test('BILL-482 formatDateUA handles the same edge cases as formatDate', function () {
+  assert.equal(format.formatDateUA(''), '');
+  assert.equal(format.formatDateUA(null), '');
+  assert.equal(format.formatDateUA(undefined), '');
+  assert.equal(format.formatDateUA('not-a-date'), '');
+  assert.equal(format.formatDateUA('2026-03-09T23:59:59+03:00'), '09.03.2026');
+});
+
+test('BILL-482 formatDate and formatDateUA are the same date, different order', function () {
+  ['2026-01-02', '2026-12-31', '2026-03-09', '2026-11-05'].forEach(function (iso) {
+    var us = format.formatDate(iso).split('/');
+    var ua = format.formatDateUA(iso).split('.');
+    assert.deepEqual(ua, [us[1], us[0], us[2]], iso);
+  });
 });
 
 test('MUST-NOT-CHANGE formatDate edge cases: empty and unparsable input', function () {
@@ -57,10 +86,14 @@ test('MUST-NOT-CHANGE formatDate reads the date in UTC, never local time', funct
 
 // --- consumer 1: HTML invoice (human) --------------------------------------
 
-test('EXPECTED-TO-CHANGE invoice HTML shows both dates MM/DD/YYYY today', function () {
+// CHANGED BY BILL-482 (was 03/09/2026 and 03/23/2026): this is the invoice the
+// ticket is about — the customer reads it, so DD.MM.YYYY.
+test('BILL-482 invoice HTML shows both dates as DD.MM.YYYY', function () {
   var html = render.renderInvoiceHtml(invoice, customer);
-  assert.match(html, /Дата: <b>03\/09\/2026<\/b>/);
-  assert.match(html, /Сплатити до: <b>03\/23\/2026<\/b>/);
+  assert.match(html, /Дата: <b>09\.03\.2026<\/b>/);
+  assert.match(html, /Сплатити до: <b>23\.03\.2026<\/b>/);
+  assert.ok(html.indexOf('03/09/2026') === -1, 'no American date left in the invoice');
+  assert.ok(html.indexOf('03/23/2026') === -1, 'no American date left in the invoice');
 });
 
 test('MUST-NOT-CHANGE invoice HTML keeps everything around the dates', function () {
@@ -75,18 +108,22 @@ test('MUST-NOT-CHANGE invoice HTML keeps everything around the dates', function 
 
 // --- consumer 2: reminder mails (human) ------------------------------------
 
-test('EXPECTED-TO-CHANGE upcoming reminder names the due date MM/DD/YYYY today', function () {
+// CHANGED BY BILL-482 (was 03/23/2026): the ticket names these mails explicitly
+// — «там теж «сплатити до 03/12/2026»».
+test('BILL-482 upcoming reminder names the due date as DD.MM.YYYY', function () {
   var mails = reminders.buildReminders([invoice], { 1: customer }, '2026-03-20');
   assert.equal(mails.length, 1);
   assert.equal(mails[0].kind, 'upcoming');
-  assert.match(mails[0].text, /слід сплатити до 03\/23\/2026\./);
+  assert.match(mails[0].text, /слід сплатити до 23\.03\.2026\./);
+  assert.ok(mails[0].text.indexOf('03/23/2026') === -1);
 });
 
-test('EXPECTED-TO-CHANGE overdue reminder names the due date MM/DD/YYYY today', function () {
+test('BILL-482 overdue reminder names the due date as DD.MM.YYYY', function () {
   var mails = reminders.buildReminders([invoice], { 1: customer }, '2026-03-24');
   assert.equal(mails.length, 1);
   assert.equal(mails[0].kind, 'overdue');
-  assert.match(mails[0].text, /мав бути сплачений до 03\/23\/2026\./);
+  assert.match(mails[0].text, /мав бути сплачений до 23\.03\.2026\./);
+  assert.ok(mails[0].text.indexOf('03/23/2026') === -1);
 });
 
 test('MUST-NOT-CHANGE reminder envelope and wording around the date', function () {
@@ -133,7 +170,8 @@ test('MUST-NOT-CHANGE JSON API exposes stored ISO dates, untouched by formatDate
   server.close();
 });
 
-test('EXPECTED-TO-CHANGE the public HTML invoice route serves MM/DD/YYYY today', async function () {
+// CHANGED BY BILL-482 (was 03/07/2026 and 03/21/2026).
+test('BILL-482 the public HTML invoice route serves DD.MM.YYYY', async function () {
   // GET /invoices/:number is NOT under /api/, so it needs no x-staff-id — this
   // is the page the ticket is complaining about.
   var server = require('../../server').createServer();
@@ -145,6 +183,6 @@ test('EXPECTED-TO-CHANGE the public HTML invoice route serves MM/DD/YYYY today',
   var html = await res.text();
   server.close();
   assert.equal(res.status, 200);
-  assert.match(html, /Дата: <b>03\/07\/2026<\/b>/);
-  assert.match(html, /Сплатити до: <b>03\/21\/2026<\/b>/);
+  assert.match(html, /Дата: <b>07\.03\.2026<\/b>/);
+  assert.match(html, /Сплатити до: <b>21\.03\.2026<\/b>/);
 });
