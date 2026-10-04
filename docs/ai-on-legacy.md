@@ -234,9 +234,10 @@ control run tests that trap directly, with the ticket alone and without the cour
   since `9435413`). `cmp` reports a difference. All 36 data rows now carry `DD.MM.YYYY` in
   `DocDate` and `PayUntil`: `INV-2026-00001;01.03.2026;15.03.2026;...` instead of
   `INV-2026-00001;03/01/2026;03/15/2026;...`. The header, the other six columns, `;` and CRLF
-  are identical. Oblik-Plus skips a row with any other date format without an error
-  (`app/docs/integrations/oblik-plus.md:29-31`), so the next nightly import would load none of
-  the 36 invoices.
+  are identical. According to `app/docs/integrations/oblik-plus.md:29-31`, Oblik-Plus skips a
+  row with any other date format without an error. The importer itself cannot be checked from
+  this repository; if it behaves as documented, the next nightly import loads none of the 36
+  invoices.
 - **Tests:** 109 tests, 109 pass (106 seeded and its 3 new ones). No test in the clone covers the
   CSV, so nothing turned red. The Task B characterization tests (the test file and the three
   golden files from `9435413`), copied into a copy of the control run, give 8 of 8 failing. Five

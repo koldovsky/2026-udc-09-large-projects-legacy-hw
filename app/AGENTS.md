@@ -22,8 +22,9 @@ What the code does not say, checked against the code in October 2026 (BILL-482).
 
 Inbound: KB-2 bank statements (`lib/payments/statement.js`: fixed width, `DDMMYYYY`, kopecks) and
 the purchasing price file (`lib/catalog/price-import.js:2-12`: `sku;new_price_hrn[;note]`,
-hryvnias with a comma or a dot). The `x-staff-id` header comes from the LDAP reverse proxy and is
-checked only for `/api/*` (`lib/http/router.js:101`); `/invoices/:number` is public.
+hryvnias with a comma or a dot). The `x-staff-id` header comes from the LDAP reverse proxy. The
+router checks it only for `/api/*`, and only that it is a nonzero number; it does not verify who
+sent it (`lib/http/router.js:100-101`). `/invoices/:number` is public.
 
 ## Traps
 

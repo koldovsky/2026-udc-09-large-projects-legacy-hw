@@ -90,7 +90,7 @@ The crontab itself is not in the repo; schedules are known only from file header
 |---|---|---|
 | `lib/store.js` | JSON-file "database", one file per collection, in-memory cache, callbacks | Live |
 | `lib/format.js` | `formatDate`, `formatMoney`, `formatDecimal`, `formatText`, `formatPercent` | Live (invoices/render, notifications/reminders, export/accounting) |
-| `lib/http/router.js` | Routing, body parsing, staff-id auth | Live |
+| `lib/http/router.js` | Routing, body parsing, nonzero `x-staff-id` check for `/api/*` (it does not verify who the staff member is) | Live |
 | `lib/invoices/` | Issuing from an order, 20% VAT, 14-day term, numbering, HTML render | Live |
 | `lib/customers/` | CRUD, EDRPOU validation, search | Live; `merge.js` is used only by tests |
 | `lib/catalog/` | Products, prices, price import, low stock | Live |
