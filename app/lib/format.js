@@ -34,6 +34,19 @@ function formatDate(value) {
 }
 
 /**
+ * Format a date for client-facing display (Ukrainian format DD.MM.YYYY).
+ *
+ * @param {string|Date} value  YYYY-MM-DD string or a Date
+ * @returns {string} the date in DD.MM.YYYY format
+ */
+function formatDateClient(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
+}
+
+/**
  * Money for people: 123450 -> "1 234,50 грн".
  * Amounts are integer kopecks everywhere (never floats!).
  */
@@ -75,6 +88,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateClient: formatDateClient,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

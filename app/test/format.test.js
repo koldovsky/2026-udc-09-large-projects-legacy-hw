@@ -34,3 +34,14 @@ test('formatDate: ISO string to MM/DD/YYYY (current behavior for Облік-Пл
   assert.equal(format.formatDate(null), '');
   assert.equal(format.formatDate(undefined), '');
 });
+
+test('formatDateClient: ISO string to DD.MM.YYYY (client-facing Ukrainian format)', function () {
+  assert.equal(format.formatDateClient('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateClient('2026-12-31'), '31.12.2026');
+  assert.equal(format.formatDateClient('2025-01-01'), '01.01.2025');
+  assert.equal(format.formatDateClient('2026-03-09T00:00:00Z'), '09.03.2026');
+  assert.equal(format.formatDateClient(new Date('2026-03-09T00:00:00Z')), '09.03.2026');
+  assert.equal(format.formatDateClient(''), '');
+  assert.equal(format.formatDateClient(null), '');
+  assert.equal(format.formatDateClient(undefined), '');
+});
