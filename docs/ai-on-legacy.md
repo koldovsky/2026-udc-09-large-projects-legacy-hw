@@ -27,9 +27,9 @@
 
 - **Що просили:** Аналіз впливу зміни форматування дат (Task B), але під час перевірки тестів помітив, що `lib/reports/table.js` має власну `fmtAmount()`
 - **Що агент сказав або зробив:** При перевірці тестів `app/test/reports/text.test.js` побачив `table.fmtAmount(1234567) === '12 345,67'` — це формат "12 345,67" (пробіл тисяч, кома десяткова, без "грн"), відмінний від `lib/format.formatMoney` ("1 234,50 грн"). Спочатку припустив, що це одна й та сама функція.
-- **Як помітили:** Читаючи `lib/reports/render.js` — там `var fmtAmount = require('./table').fmtAmount;` і цей форматтер використовується для текстового виводу звітів (management reports), не для клієнтських документів.
+- **Як помітили:** Читаючи `lib/reports/render.js` — там `var fmtAmount = require('./table').fmtAmount;` для грошових сум у текстовому виводі звітів, а `dates.monthName()` з `lib/reports/dates.js` — для назв місяців. Жоден з них не пов'язаний з `lib/format.formatMoney` або `lib/format.formatDate`.
 - **Чому він так вирішив:** Назва `formatMoney` / `fmtAmount` схожа, в legacy-коді часто дублюють утиліти. Не перевірив імпорти в `lib/reports/render.js` одразу.
-- **Як виправили:** Додав у `docs/impact.md` примітку (неявно — через те, що перевірив `lib/export/accounting.js` використовує `format.formatDecimal` для машинного формату, а `lib/reports` — власну `fmtAmount`). Переконався, що звіти не зламаються: вони не використовують `formatDate`, а `dates.monthName()`.
+- **Як виправили:** Переконався, що звіти не зламаються зміною дат: вони використовують власний `fmtAmount()` для грошей та `dates.monthName()` для місяців, а не `format.formatMoney`/`format.formatDate`. У `docs/impact.md` звіти згадані лише як споживачі `dates.monthName()` (рядок 43), примітки про грошові формати там немає — і не потрібна, бо тікет стосується лише дат.
 
 ---
 

@@ -30,7 +30,7 @@
 |---|---|---|
 | `lib/store.js` | Tiny JSON "database": завантажує/кешує/зберігає колекції у `data/*.json`. Dates=YYYY-MM-DD, money=integer kopecks. | Живий |
 | `lib/http/router.js` | Мінімальний router поверх Node http. Підтримує `:param`, читає JSON body, перевіряє `x-staff-id` заголовок. | Живий |
-| `lib/format.js` | Форматування для людей/машин: `formatDate` (DD/MM/YYYY), `formatMoney` ("1 234,50 грн"), `formatDecimal` ("1234.50"), `formatText`, `formatPercent`. | Живий |
+| `lib/format.js` | Форматування для людей/машин: `formatDate` (MM/DD/YYYY), `formatDateClient` (DD.MM.YYYY), `formatMoney` ("1 234,50 грн"), `formatDecimal` ("1234.50"), `formatText`, `formatPercent`. | Живий |
 | `lib/customers/` | CRUD клієнтів, валідація ЄДРПОУ, пошук/злиття дублікатів, список відкритих інвойсів клієнта. | Живий |
 | `lib/orders/` | Створення/нумерація замовлень (ORD-YYYY-NNNN), валідація позицій, статуси, підсумки без ПДВ. | Живий |
 | `lib/invoices/` | Виставлення інвойсів з замовлень, розрахунок тоталів (ПДВ 20% на підсумок, округлення до копійки), нумерація INV-YYYY-NNNNN, перевірка прострочення. | Живий |
@@ -71,7 +71,7 @@
 | 1 | HTTP сервер слухає на порту 8080 з config/default.json | ✅ | `server.js:38` — `config.server.port`, `default.json:7` — `"port": 8080` |
 | 2 | Дані зберігаються у JSON файлах в `data/`, дати — YYYY-MM-DD, гроші — копійки | ✅ | `store.js:9` — "Dates are stored as YYYY-MM-DD strings. Money is integer kopecks." |
 | 3 | Форматування дат для експорту в Облік-Плюс — MM/DD/YYYY | ✅ | `format.js:33` — `formatDate` повертає `MM/DD/YYYY`; `oblik-plus.md:23` — "Дата **`MM/DD/YYYY`**" |
-| 4 | Форматування грошей для експорту — крапка як десятковий роздільник, без пробілів/валюти | ✅ | `format.js:54-60` — `formatDecimal` повертає "1234.50"; `oblik-plus.md:24` — "крапка як десятковий роздільник, без пробілів і без «грн»" |
+| 4 | Форматування грошей для експорту — крапка як десятковий роздільник, без пробілів/валюти | ✅ | `format.js:67-73` — `formatDecimal` повертає "1234.50"; `oblik-plus.md:24` — "крапка як десятковий роздільник, без пробілів і без «грн»" |
 | 5 | Нічний експорт генерується `bin/nightly-export.js` о 02:30, кладе CSV у `out/export/oblik-YYYY-MM-DD.csv` | ✅ | `nightly-export.js:2-5`, `nightly-export.js:24-25` — `config.export.filePrefix + today + '.csv'` |
 | 6 | Нагадування надсилаються cron-ом о 09:00, пишуться у `out/mail/` як .txt | ✅ | `send-reminders.js:3-4`, `send-reminders.js:21-26` |
 | 7 | ПДВ розраховується на підсумок (subtotal) з округленням half-up до копійки, ставка 20% | ✅ | `invoices/index.js:16-26` — `totals()` функція, `VAT_RATE = 20` |
