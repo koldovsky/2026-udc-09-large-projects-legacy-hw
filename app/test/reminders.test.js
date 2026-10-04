@@ -28,3 +28,28 @@ test('reminder mail addresses the contact and names the amount', function () {
   assert.match(mails[0].text, /^Ірина,/);
   assert.match(mails[0].text, /999,00 грн/);
 });
+
+// --- Characterization tests: golden master for date format in reminder emails ---
+// These tests lock the current behavior (MM/DD/YYYY via format.formatDate in reminders.js).
+// If formatDate changes, these will fail — update them intentionally.
+
+test('reminder mail: date format is MM/DD/YYYY (golden master)', function () {
+  var mails = reminders.buildReminders([inv], customers, '2026-03-09');
+  var text = mails[0].text;
+  // due_at: 2026-03-12 -> 03/12/2026
+  assert.match(text, /до 03\/12\/2026/);
+});
+
+test('reminder mail: overdue reminder also uses MM/DD/YYYY', function () {
+  var overdueInv = Object.assign({}, inv, { due_at: '2026-02-28' });
+  var mails = reminders.buildReminders([overdueInv], customers, '2026-03-01');
+  var text = mails[0].text;
+  // due_at: 2026-02-28 -> 02/28/2026
+  assert.match(text, /до 02\/28\/2026/);
+});
+
+test('reminder mail: amount uses formatMoney (space thousands, comma decimal, грн)', function () {
+  var mails = reminders.buildReminders([inv], customers, '2026-03-09');
+  var text = mails[0].text;
+  assert.match(text, /999,00 грн/);
+});

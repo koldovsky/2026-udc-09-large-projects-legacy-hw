@@ -47,3 +47,33 @@ test('rendered invoice escapes HTML in customer names', function () {
   var html = render.renderInvoiceHtml(invoice, { name: '<script>x</script>' });
   assert.ok(html.indexOf('<script>x') === -1);
 });
+
+// --- Characterization tests: golden master for date format in HTML invoice ---
+// These tests lock the current behavior (MM/DD/YYYY via format.formatDate).
+// If formatDate changes, these will fail — update them intentionally.
+
+test('rendered invoice: date format is MM/DD/YYYY (golden master)', function () {
+  var html = render.renderInvoiceHtml(invoice, customer);
+  // issued_at: 2026-03-09 -> 03/09/2026
+  assert.match(html, /Дата: <b>03\/09\/2026<\/b>/);
+  // due_at: 2026-03-23 -> 03/23/2026
+  assert.match(html, /Сплатити до: <b>03\/23\/2026<\/b>/);
+});
+
+test('rendered invoice: different dates produce correct MM/DD/YYYY', function () {
+  var inv2 = Object.assign({}, invoice, {
+    number: 'INV-2026-00008',
+    issued_at: '2026-12-31',
+    due_at: '2027-01-14',
+  });
+  var html = render.renderInvoiceHtml(inv2, customer);
+  assert.match(html, /Дата: <b>12\/31\/2026<\/b>/);
+  assert.match(html, /Сплатити до: <b>01\/14\/2027<\/b>/);
+});
+
+test('rendered invoice: amounts use formatMoney (space thousands, comma decimal, грн)', function () {
+  var html = render.renderInvoiceHtml(invoice, customer);
+  assert.match(html, /До сплати: 1 200,00 грн/);
+  assert.match(html, /ПДВ 20%: 200,00 грн/);
+  assert.match(html, /Разом без ПДВ: 1 000,00 грн/);
+});
