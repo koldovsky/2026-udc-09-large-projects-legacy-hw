@@ -1,0 +1,27 @@
+2026-03-13-overdue-31.txt
+To: client7@example.invalid
+Subject: Прострочено: рахунок INV-2026-00031
+
+2026-03-13-overdue-32.txt
+To: client8@example.invalid
+Subject: Прострочено: рахунок INV-2026-00032
+
+2026-03-13-overdue-33.txt
+To: client9@example.invalid
+Subject: Прострочено: рахунок INV-2026-00033
+
+2026-03-13-overdue-35.txt
+To: client11@example.invalid
+Subject: Прострочено: рахунок INV-2026-00035
+
+2026-03-13-upcoming-14.txt
+To: client2@example.invalid
+Subject: Нагадування: рахунок INV-2026-00014
+
+2026-03-13-upcoming-2.txt
+To: client2@example.invalid
+Subject: Нагадування: рахунок INV-2026-00002
+
+2026-03-13-upcoming-26.txt
+To: client2@example.invalid
+Subject: Нагадування: рахунок INV-2026-00026

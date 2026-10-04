@@ -1,0 +1,116 @@
+// BILL-482 characterization: payment reminders as bin/send-reminders.js writes
+// them into the outbox for the SMTP relay.
+//
+// Two readers: the mail BODY is read by the customer (a person) — its due date
+// goes through format.formatDate and is meant to change with the ticket. The
+// file NAME and the To:/Subject: block are read by the relay (a system) and must
+// stay as they are. The exact-output test is expected to go red with BILL-482;
+// the relay test and the "apart from the date format" test must stay green.
+var test = require('node:test');
+var assert = require('node:assert/strict');
+var childProcess = require('child_process');
+var fs = require('fs');
+var os = require('os');
+var path = require('path');
+
+var APP = path.join(__dirname, '..', '..');
+var GOLDEN = path.join(__dirname, 'golden');
+var DAY = '2026-03-13'; // with the seeded data: 3 "upcoming" and 4 "overdue" mails
+
+var tmpDirs = [];
+var stdout;
+var files;
+
+// Throwaway copy of the app: the cron script writes its out/ there, never into
+// the real one. Keep in sync with oblik-export.test.js (a shared helper under
+// test/ would itself be run as a test file).
+function appCopy() {
+  var d = fs.mkdtempSync(path.join(os.tmpdir(), 'billing-bill482-'));
+  tmpDirs.push(d);
+  ['bin', 'lib', 'config', 'data'].forEach(function (name) {
+    fs.cpSync(path.join(APP, name), path.join(d, name), { recursive: true });
+  });
+  return d;
+}
+
+function run(d, script, args) {
+  var r = childProcess.spawnSync(process.execPath, [path.join(d, 'bin', script)].concat(args), { cwd: d, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.error ? String(r.error) : 'signal=' + r.signal + '\n' + r.stderr);
+  return r.stdout;
+}
+
+function golden(name) {
+  return fs.readFileSync(path.join(GOLDEN, name), 'utf8');
+}
+
+// MM/DD/YYYY (today) and DD.MM.YYYY (after BILL-482) both become YYYY-MM-DD,
+// so whatever is left must not change with the ticket
+function canonDates(s) {
+  return s
+    .replace(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g, '$3-$1-$2')
+    .replace(/\b(\d{2})\.(\d{2})\.(\d{4})\b/g, '$3-$2-$1');
+}
+
+function readOutbox(d) {
+  var outbox = path.join(d, 'out', 'mail');
+  return fs
+    .readdirSync(outbox)
+    .sort()
+    .map(function (name) {
+      return { name: name, text: fs.readFileSync(path.join(outbox, name), 'utf8') };
+    });
+}
+
+function allMail(list) {
+  return list
+    .map(function (f) {
+      return '=== ' + f.name + '\n' + f.text;
+    })
+    .join('');
+}
+
+test.before(function () {
+  var dir = appCopy();
+  stdout = run(dir, 'send-reminders.js', [DAY]);
+  files = readOutbox(dir);
+});
+
+test.after(function () {
+  tmpDirs.splice(0).forEach(function (d) {
+    fs.rmSync(d, { recursive: true, force: true });
+  });
+});
+
+test('send-reminders queues 7 mails for ' + DAY, function () {
+  assert.equal(stdout, '7 reminder(s) queued\n');
+});
+
+test('every mail file is exactly the pinned one (names, headers and bodies)', function () {
+  assert.equal(allMail(files), golden('reminders-' + DAY + '.txt'));
+});
+
+test('every mail file is the same whatever the server time zone', function () {
+  ['America/Los_Angeles', 'Pacific/Kiritimati'].forEach(function (tz) {
+    var d = appCopy();
+    var r = childProcess.spawnSync(process.execPath, [path.join(d, 'bin', 'send-reminders.js'), DAY], {
+      cwd: d,
+      encoding: 'utf8',
+      env: Object.assign({}, process.env, { TZ: tz }),
+    });
+    assert.equal(r.status, 0, tz + ' ' + r.stderr);
+    assert.equal(allMail(readOutbox(d)), golden('reminders-' + DAY + '.txt'), tz);
+  });
+});
+
+test('apart from the date format, every mail file is exactly the pinned one', function () {
+  assert.equal(canonDates(allMail(files)), canonDates(golden('reminders-' + DAY + '.txt')));
+});
+
+test('file names and the To:/Subject: block — what the relay reads — are pinned', function () {
+  var actual = files
+    .map(function (f) {
+      return f.name + '\n' + f.text.split('\n\n')[0] + '\n';
+    })
+    .join('\n');
+  assert.equal(actual, golden('reminders-' + DAY + '.relay.txt'));
+});
