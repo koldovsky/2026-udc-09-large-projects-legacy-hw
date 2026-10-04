@@ -23,19 +23,17 @@ when the session started.
 | `10b72bbe` | 13:24 | Review of Task C |
 | `7ba0011d` | 14:30 | Control run: Haiku, the bare ticket, a clean clone outside this repository |
 
-Three cases are about what the code and its documents say: a story from the old documentation
-repeated as fact (case 1), a missed consumer (case 2) and a misleading comment fixed only in part
-(case 4). Case 3 is about how much of the codebase the agent claimed to have covered: its report
-on its own work said it had mapped every file, and it was taken on faith in the same way. The
-control run at the end shows what the same ticket does on the fastest model without the course
-files; its diff and its final message are quoted in full, so it can be checked without the
-transcript.
+Cases 1, 2 and 4 are about what the code and its documents say: a story from the old
+documentation repeated as fact, a missed consumer, and a misleading comment fixed only in part.
+Case 3 is about the agent's report on its own work. The control run at the end gives the same
+ticket to the fastest model without the course files; its diff and final message are quoted in
+full.
 
-The repository alone does not show every case to the same degree. It shows the error itself in
-cases 2 and 4: the subagent's verbatim answer in the appendix of `docs/codebase-map.md`, and
-commit `8817d04`. In case 3 it shows the wrong file count (the same appendix), but the "mostly
-searching" claim is contradicted only by the transcript. Case 1 was an error in chat, so the
-repository shows only the document the story came from.
+The repository shows the error itself in cases 2, 3 and 4: the subagent's answer and its tool
+calls are in appendices A and B of `docs/codebase-map.md`, and the comment is in commit
+`8817d04`. Case 1 was an error in chat, so the repository shows only the document the story came
+from. The control run was made outside the repository; its effect on the Oblik-Plus export can
+be repeated from `main` with the commands at the end of that section.
 
 ## Case 1 — A story from the old documentation repeated as a fact
 
@@ -72,7 +70,7 @@ repository shows only the document the story came from.
   format."
 - **What the agent said or did:** The subagent listed six consumers under "## 4. External
   integrations (who consumes the output)" in its final message (`agent-a2be3324ef771d933`,
-  11:52; appendix of `docs/codebase-map.md`). The old admin UI, which reads the `/api/*` JSON,
+  11:52; appendix A of `docs/codebase-map.md`). The old admin UI, which reads the `/api/*` JSON,
   is not among them. The main agent verified 14 claims and told the user: "14 claims checked,
   and all of them turned out to be true" (`e3938df1`, 11:56, translated). The completeness of
   the consumer list was not one of the 14 claims. Two later review sessions (`9220eb51` at
@@ -83,7 +81,8 @@ repository shows only the document the story came from.
   (the old admin UI wants a plain amount string, used for `totals.outstanding` at `:221`),
   `app/lib/customers/validate.js:4-5` (the admin UI shows validation messages as-is) and
   `app/lib/audit/routes.js:11` (the admin page renders the audit rows in one table). The
-  subagent transcript shows that it printed all three files (calls 3, 7 and 9).
+  subagent's tool calls (appendix B of `docs/codebase-map.md`) show that it printed all three
+  files (calls 3, 7 and 9).
 - **Why it decided so:** The transcript does not show a reason. In each of the three places the
   UI is mentioned in passing, to explain a detail (a string format, the language of the
   messages, a row limit), and not described as an integration. Each of the six consumers it
@@ -93,7 +92,7 @@ repository shows only the document the story came from.
   UI (staff)" row to its integrations table. The omission does not change the scope of
   BILL-482, because no `/api/*` response passes through `lib/format.js`. It would matter for a
   change to the customer totals, so the contract is now in `app/AGENTS.md`.
-- **Check from the repository:** the subagent's answer is verbatim in the appendix of
+- **Check from the repository:** the subagent's answer is verbatim in appendix A of
   `docs/codebase-map.md`; its section "4. External integrations" lists six consumers.
   `sed -n '/^## Appendix/,$p' docs/codebase-map.md | grep -ci admin` prints `0`. The three
   comments that name the UI are at the lines cited above.
@@ -115,17 +114,19 @@ repository shows only the document the story came from.
   `app/`: `find . -type f -not -path './test/*' -not -path './data/*' | wc -l`, run in `app/`
   at commit `c487ec9`, prints `52`, and the subagent's own list of opened files names 52: 51 of
   them plus `test/format.test.js`. "All" was not true either. The one file missing from the
-  list, `lib/catalog/index.js`, appears in no read command in the transcript, only in grep
-  output (call 7).
+  list, `lib/catalog/index.js`, appears in no command, only in the output of the file listing
+  (call 1) and of two greps (calls 5 and 7).
 - **Why it decided so:** The subagent's final message was treated as data about the run, not as
   a set of claims. The verification table covered claims about the code only. On legacy code
   this matters beyond the count: "all files" is the claim that makes a map look complete, and a
   reader who trusts it stops looking for what the map left out (case 2).
 - **How it was fixed:** Claims 15 and 16 (❌) were added. Section 1 now takes the navigation
   cost and the answer to "read or searched?" from the transcript only.
-- **Check from the repository:** the appendix of `docs/codebase-map.md` keeps the subagent's
+- **Check from the repository:** appendix A of `docs/codebase-map.md` keeps the subagent's
   "all 41 non-test source, config and doc files" (its first line), "Files opened or read (41)"
-  followed by a list of 52 files, and "**Approach:** mostly searching".
+  followed by a list of 52 files, and "**Approach:** mostly searching". Appendix B lists its 11
+  tool calls: calls 1–3 are a file listing and bulk `cat -n`, and the first `grep` is in
+  call 5.
   `git ls-tree -r --name-only c487ec9 -- app | grep -vE '^app/(test|data)/' | wc -l` prints
   `52`, and
   `sed -n '/^\*\*Files opened or read/,/^\*\*Tool calls/p' docs/codebase-map.md | grep -c 'catalog/index'`
@@ -242,6 +243,36 @@ control run tests that trap directly, with the ticket alone and without the cour
   of them are the change the ticket wants (the invoice page directly, over HTTP and from the CLI;
   the reminder mails directly and as outbox files). The other three are the regression: the
   `formatDate` test and both Oblik-Plus CSV tests.
+- **Check from the repository:** the clean clone and its transcript are outside this
+  repository, but the change that matters is the one line quoted above, so the result can be
+  repeated from `main`. Run from the repository root:
+
+  ```sh
+  repo=$(pwd)
+  tmp=$(mktemp -d)
+  git archive main app | tar -x -C "$tmp"
+  cd "$tmp/app"
+  # the control run's change to lib/format.js:33
+  node -e '
+  var fs = require("fs");
+  var src = fs.readFileSync("lib/format.js", "utf8");
+  var out = src.replace(
+    "pad(d.getUTCMonth() + 1) + \x27/\x27 + pad(d.getUTCDate()) + \x27/\x27",
+    "pad(d.getUTCDate()) + \x27.\x27 + pad(d.getUTCMonth() + 1) + \x27.\x27");
+  if (out === src) throw new Error("line not found");
+  fs.writeFileSync("lib/format.js", out);
+  '
+  node --test                            # 106 tests, 105 pass, 1 fail
+  node bin/nightly-export.js 2026-03-16
+  cmp out/export/oblik-2026-03-16.csv "$repo/app/test/golden/oblik-export.csv"   # differ: line 2
+  cd "$repo"
+  git archive 9435413 app/test/bill-482-characterization.test.js app/test/golden | tar -x -C "$tmp"
+  cd "$tmp/app" && node --test test/bill-482-characterization.test.js            # 8 tests, 0 pass
+  ```
+
+  The one seeded failure is the invoice date assertion (`app/test/invoices.test.js:41-42`), which
+  the control run updated in its own diff; no seeded test fails on the CSV. Run on 2026-10-04 with
+  Node 24.21, in bash and in zsh, with the results shown in the comments.
 - **What it saw and passed over:** It read `app/lib/format.js` in full, and the file header
   says "Shared by the invoice renderer, the reminder mails and the exports, so keep the
   signatures stable" (`app/lib/format.js:4-5`). It never opened `lib/export/`,

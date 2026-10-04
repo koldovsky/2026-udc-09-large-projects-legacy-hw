@@ -3,6 +3,19 @@
 > Sections 1-4 are Task B, written before the code change; their line references are to commit
 > `9435413`. Section 5 is Task C, written after the change.
 
+## Summary (added after Task C)
+
+- Three consumers reach `formatDate` (section 2). The invoice HTML and the reminder mails are
+  read by customers and change to `DD.MM.YYYY`. The Oblik-Plus CSV is read by another system and
+  stays `MM/DD/YYYY`, byte for byte; it reaches `formatDate` through a column type in
+  `app/config/export-columns.json`, not by name (section 3).
+- Eight characterization tests against three golden files pin the current output of all three,
+  directly and through the real entry points. They were green on the unchanged code and were
+  committed in `9435413`, before the change in `8817d04` (section 4).
+- The change adds `formatDateUa` for the two customer outputs; `formatDate` and the export code
+  are not touched. Six tests turned red, all expected, and each update is explained; the CSV
+  golden file is unchanged. `cd app && npm test`: 115 tests, 115 pass (section 5).
+
 ## 1. What changes
 
 BILL-482 asks for the dates customers see on invoices in `DD.MM.YYYY` instead of `MM/DD/YYYY`.
@@ -162,10 +175,18 @@ customers read move to a new function.
 
 Because the export looks up its helper by type, every function exported from `lib/format.js` is
 a valid column type, so `DateUa` now is one too. No column uses it, and the column types must not
-change (`app/docs/integrations/oblik-plus.md:12-13`). Re-typing a date column to `DateUa` is
-caught by the existing tests. With `issued_at` re-typed to `DateUa` in
+change (`app/docs/integrations/oblik-plus.md:12-13`). A date column re-typed to `DateUa` in the
+repository is caught by the existing tests. With `issued_at` re-typed to `DateUa` in
 `app/config/export-columns.json:3` of a temporary copy of `app/` (the method used for the
 section 4 mutants), 2 tests failed, both Oblik-Plus CSV tests, and 113 passed.
+
+The tests do not guard the deployed config. Accounting may ask for the columns to be rearranged,
+and that is done in the JSON without a deploy (`app/docs/integrations/oblik-plus.md:12-13`), so
+an edit there never runs through `npm test`. A type that is not a formatter name stops the
+export with an error (`app/lib/export/accounting.js:31-33`). `DateUa` is a formatter name, as
+`Money` and `Percent` already were before the change, so the export would run and write the
+wrong format for that column. On that path the only guard is the rule in the same document:
+column types must not change.
 
 The alternative was to change `formatDate` itself and keep the export on `MM/DD/YYYY` with a
 special case in `accounting.js`. Today's output would be the same, but the change would edit the
