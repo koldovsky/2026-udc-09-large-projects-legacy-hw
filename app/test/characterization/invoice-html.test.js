@@ -1,10 +1,10 @@
 // BILL-482 characterization: the invoice a customer reads.
 //
 // Read by a PERSON: GET /invoices/:number and bin/render-invoice.js both go
-// through lib/invoices/render.js -> format.formatDate. Pinned on the unchanged
-// code. The exact-output tests are expected to go red with BILL-482 (the dates
-// are what the ticket changes); the "apart from the date format" test must
-// stay green.
+// through lib/invoices/render.js. Pinned before the change; with BILL-482 the
+// dates became DD.MM.YYYY (format.formatDateUa) and the goldens were updated
+// for the date format only. The "apart from the date format" test proves that
+// nothing else changed.
 var test = require('node:test');
 var assert = require('node:assert/strict');
 var childProcess = require('child_process');
@@ -35,7 +35,7 @@ function assertSameHtml(actual, expected) {
   assert.equal(actual, expected);
 }
 
-// MM/DD/YYYY (today) and DD.MM.YYYY (after BILL-482) both become YYYY-MM-DD,
+// MM/DD/YYYY (before BILL-482) and DD.MM.YYYY (after) both become YYYY-MM-DD,
 // so whatever is left must not change with the ticket
 function canonDates(s) {
   return s

@@ -21,16 +21,31 @@ function toDate(value) {
 }
 
 /**
- * Format a date for display.
+ * Date for machines: 2026-03-09 -> "03/09/2026".
+ *
+ * Облік-Плюс imports this exact format: lib/export/accounting.js looks it up by
+ * name ('format' + col.type, "type": "Date" in config/export-columns.json), so
+ * grep finds no caller. Do not change or rename it; dates for people go through
+ * formatDateUa.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} MM/DD/YYYY
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Date for people (invoices, reminder mails): 2026-03-09 -> "09.03.2026" (BILL-482).
+ */
+function formatDateUa(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +90,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUa: formatDateUa,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

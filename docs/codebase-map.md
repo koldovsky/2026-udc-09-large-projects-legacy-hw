@@ -27,12 +27,18 @@
 
 ## 2. Карта (те, що видав агент, з вашими правками)
 
-Node ≥ 22, CommonJS, колбеки, **жодної npm-залежності**, 106 тестів (`node --test`).
+Node ≥ 22, CommonJS, колбеки, **жодної npm-залежності**, 127 тестів (`node --test`): 106 початкових і 21 додано
+для BILL-482 (у Task B, до зміни коду).
 
 _Правки після повторної перевірки:_
 - приклади тепер із реальних запусків;
 - уточнено твердження про часовий пояс і «динамічний імпорт»;
 - додано 2 колекції, щоденні нагадування й розділ «Ризики».
+
+_Після BILL-482 (Task C):_
+- дати для клієнтів форматує нова `formatDateUa`;
+- CSV для «Облік-Плюс» тепер під тестами;
+- посилання й приклади відповідають поточному коду.
 
 ### Точки входу
 
@@ -57,7 +63,7 @@ _Правки після повторної перевірки:_
 |---|---|---|
 | `store.js` | JSON-файли як «база»: кеш у пам'яті, перезапис цілого файлу в `save()` | Живий |
 | `http/router.js` | Маршрути з `:param`, JSON/HTML, перевірка `x-staff-id` для `/api/*` | Живий |
-| `format.js` | `formatDate`, `formatMoney`, `formatDecimal`, `formatText`, `formatPercent` | Живий. 3 статичні імпортери; експорт обирає функцію **за іменем** (`export/accounting.js:30`) |
+| `format.js` | `formatDate` (`MM/DD/YYYY`, для «Облік-Плюс»), `formatDateUa` (`дд.мм.рррр`, для людей; BILL-482), `formatMoney`, `formatDecimal`, `formatText`, `formatPercent` | Живий. 3 статичні імпортери; експорт обирає функцію **за іменем** (`export/accounting.js:30`) |
 | `invoices/` | Рахунок із замовлення (ПДВ 20 %, строк 14 днів), HTML | Живий |
 | `notifications/reminders.js` | Листи «скоро строк» / «прострочено» | Живий |
 | `export/accounting.js` | CSV для «Облік-Плюс»; колонки й типи — з `config/export-columns.json` | Живий |
@@ -82,7 +88,7 @@ _Правки після повторної перевірки:_
 | Хто | Канал | Формат | Читач |
 |---|---|---|---|
 | **«Облік-Плюс»** (бухгалтерія) | CSV щоночі, забирають о 06:00* | `;`, CRLF, **дати `MM/DD/YYYY`**, суми `5793.00`. Рядок із чужою датою мовчки пропускає* | **Система** |
-| Клієнти | HTML-рахунок; листи через SMTP-релей* | Дати — `formatDate`, гроші — `formatMoney` | **Людина** (ім'я файлу й заголовки листа читає релей) |
+| Клієнти | HTML-рахунок; листи через SMTP-релей* | Дати — `formatDateUa` (`дд.мм.рррр`), гроші — `formatMoney` | **Людина** (ім'я файлу й заголовки листа читає релей) |
 | Директор, бухгалтерія | Місячний звіт поштою* | Текстова таблиця | **Людина** |
 | BI-таблиця, старий адмін-UI* | JSON `/api/*` | Дати ISO | **Система** |
 | Банк, відділ закупівель | Вхід: виписка KB-2, файл цін | `DDMMYYYY`; `sku;ціна` | — |
@@ -91,23 +97,27 @@ _Правки після повторної перевірки:_
 
 | Де | Вихід | Приклад (запуск) | Читач | Через `format.js` |
 |---|---|---|---|---|
-| `invoices/render.js:38-39` | Дати в HTML-рахунку | `03/07/2026` (К3) | Клієнт | Так |
-| `notifications/reminders.js:40,46` | Дата в листі | `03/16/2026` (К5) | Клієнт | Так |
+| `invoices/render.js:38-39` → `formatDateUa` | Дати в HTML-рахунку | `07.03.2026` (К3) | Клієнт | Так |
+| `notifications/reminders.js:40,46` → `formatDateUa` | Дата в листі | `16.03.2026` (К5) | Клієнт | Так |
 | `export/accounting.js:30` → `format['format' + type]` | `DocDate`, `PayUntil` у CSV | `03/01/2026` (К1) | **«Облік-Плюс»** | **Так, опосередковано** — слова `formatDate` там немає |
-| `format.js:40-74` | Гроші, текст, %: HTML і листи / CSV | `1 542,00 грн` (К5) / `4827.50` (К1) | Люди / система | Так |
+| `format.js:55-89` | Гроші, текст, %: HTML і листи / CSV | `1 542,00 грн` (К5) / `4827.50` (К1) | Люди / система | Так |
 | `reports/dates.js`, `reports/table.js` | Звіти | `березень 2026`, `74 955,00` (К6) | Люди, BI | Ні |
 | Локальні `fmtAmount` у `customers/`, `catalog/price-import.js`, `bin/import-statement.js` | API, повідомлення, CLI | `1234.50`, `95,50` (К7) | Адмін-UI, працівники | Ні |
 | Внутрішні дати, JSON API | Сирі значення | `2026-03-21` | Системи | Ні |
 
-**Висновок:** `formatDate` (`format.js:29-34`) формує два виходи для людей і один для машини. Машинний
-вихід дістається до неї через ім'я з конфігу.
+**Висновок:**
+- **До BILL-482** `formatDate` формувала два виходи для людей і один для машини. Машинний вихід діставався до
+  неї через ім'я з конфігу.
+- **Тепер** `formatDate` (`format.js:34-39`) лишилася тільки для «Облік-Плюс». Людям дати форматує
+  `formatDateUa` (`format.js:44-49`).
 
 ### Ризики й неочевидні факти
 
-- **CSV не захищений тестами.** Формат дати пінить лише `test/invoices.test.js:41-42`, а CSV не тестується
-  зовсім. Зміна `formatDate` змінить CSV без жодного червоного тесту.
+- **До BILL-482 CSV не був захищений тестами.** Формат дати фіксував лише `test/invoices.test.js:41-42`, тож зміна
+  `formatDate` змінила б CSV без жодного червоного тесту. Тепер файл байт у байт фіксує
+  `test/characterization/oblik-export.test.js`.
 - **Імена в `format.js` — це допустимі `type` у конфігу.** Перейменування `formatDate` зламає нічний експорт
-  (`accounting.js:31-33`).
+  (`accounting.js:31-33`). Після BILL-482 допустимим став і `DateUa`; для «Облік-Плюс» його не вказувати.
 - **Битий `require` у модулі маршрутів мовчки прибирає його маршрути** (`server.js:25-26`).
 - **Прострочене нагадування йде щодня:** прапорців `*_reminded` ніхто не ставить (К5: 27 листів щодня).
 - **Сховище:**
@@ -130,16 +140,16 @@ _Правки після повторної перевірки:_
 | 3 | «Дані лежать у MongoDB»; «Node 8+ і MongoDB 3.6» (`ARCHITECTURE.md:8,39`) | ❌ | `store.js:4-5` — JSON-файли; `legacy/mongo-migrate.js:3-4` — міграція 2020 року; `engines.node: ">=22"` |
 | 4 | «PDF через сервіс `pdf-render`» (`ARCHITECTURE.md:20`) | ❌ | `legacy/pdf-client.js:8-9`: вимкнено у 2020; `grep -rn "pdf-client" lib bin server.js test` → нічого |
 | 5 | «`lib/export/csv.js`», «`lib/mail` — SMTP» (`ARCHITECTURE.md:22-23`) | ❌ | Обох шляхів немає (`ls`); експорт — `export/accounting.js`, листи — файли (`bin/send-reminders.js:21-25`) |
-| 6 | «Усі дати зберігаються й передаються в ISO 8601» (`ARCHITECTURE.md:27-28`) | ❌ | Зберігаються — так (К2); передаються — ні: К1 → `03/01/2026` (`format.js:33`) |
+| 6 | «Усі дати зберігаються й передаються в ISO 8601» (`ARCHITECTURE.md:27-28`) | ❌ | Зберігаються — так (К2); передаються — ні: К1 → `03/01/2026` (`format.js:38`) |
 | 7 | «Гроші — цілі копійки» (`ARCHITECTURE.md:29`) | ✅ | К2: 372 поля `*_kopecks`, нецілих — 0 |
 | 8 | «Зовнішні інтеграції: тільки SMTP» (`ARCHITECTURE.md:30`) | ❌ | `grep -rni smtp lib bin server.js` → лише коментар; є виписка KB-2 (`payments/routes.js:61`), імпорт цін (`catalog/routes.js:92`), CSV для «Облік-Плюс» (`bin/nightly-export.js:24-25`) |
-| 9 | «`npm install`», «`npm start   # http://localhost:3000`» (`ARCHITECTURE.md:35-36`) | ❌ | Залежностей немає, `npm test` → 106 pass без `install`; порт 8080 (`config/default.json:7`) |
-| 10 | «Дата — `MM/DD/YYYY`» (`app/docs/integrations/oblik-plus.md:23`) | ✅ | `export-columns.json:3-4` (`Date`) → `accounting.js:30` → `format.js:33`; К1 |
-| 11 | «UTF-8, `;`, CRLF, заголовки першим рядком; суми з крапкою без «грн»; текст без `;`» (`oblik-plus.md:19-25`) | ✅ | `accounting.js:12-13,43-49`; `format.js:54-60,66-69`; `bin/nightly-export.js:25` (`'utf8'`); К1, К7 |
-| 12 | JSDoc `formatDate`: "the date in ISO format" (`format.js:27`) | ❌ | `format.js:33` повертає `MM/DD/YYYY`; К3 → `03/07/2026` |
+| 9 | «`npm install`», «`npm start   # http://localhost:3000`» (`ARCHITECTURE.md:35-36`) | ❌ | Залежностей немає, `npm test` → усі 127 pass без `install`; порт 8080 (`config/default.json:7`) |
+| 10 | «Дата — `MM/DD/YYYY`» (`app/docs/integrations/oblik-plus.md:23`) | ✅ | `export-columns.json:3-4` (`Date`) → `accounting.js:30` → `format.js:38`; К1 |
+| 11 | «UTF-8, `;`, CRLF, заголовки першим рядком; суми з крапкою без «грн»; текст без `;`» (`oblik-plus.md:19-25`) | ✅ | `accounting.js:12-13,43-49`; `format.js:69-75,81-84`; `bin/nightly-export.js:25` (`'utf8'`); К1, К7 |
+| 12 | JSDoc `formatDate`: "the date in ISO format" (`format.js:27` до BILL-482) | ❌ | `git show fcab2c6:app/lib/format.js \| sed -n 27p` → цей текст; а функція повертала й повертає `MM/DD/YYYY` (`format.js:38`; К1 → `03/01/2026`). JSDoc виправлено в BILL-482 |
 | 13 | "Anything without it [`x-staff-id`] is rejected" (`router.js:92-93`) | ❌ | `router.js:101` перевіряє лише `/api/*`; К4: `/invoices/…` без заголовка → 200, `/api/invoices` → 401 |
 | 14 | "entries are written by the modules … through audit.record()" (`audit/routes.js:2-3`) | ❌ | `grep -rn "\.record(" lib bin` → лише цей коментар |
-| 15 | "Nothing calls this module" — знижки (`discounts/index.js:7`) | ✅ | `grep -rnE "require\(.*discounts" lib bin server.js` → нічого; імпортують лише 2 тести |
+| 15 | "Nothing calls this module" — знижки (`discounts/index.js:7`) | ✅ | `grep -rnE "require\(.*discounts" lib bin server.js` → нічого; імпортують лише 2 тестові файли (`test/discounts/*.test.js`) |
 | 16 | Карта: «`format.js` імпортують 3 модулі; експорт бере `formatDate` за іменем, зібраним під час виконання» | ✅ | `grep -rnE "format(\.js)?['\"]\)" lib bin server.js` → `accounting.js:9`, `render.js:7`, `reminders.js:4`; `grep -rn formatDate lib/export config` → 0 |
 | 17 | Карта: «звіти не залежать від `format.js`» | ✅ | `grep -hoE "require\([^)]*\)" lib/reports/*.js lib/store.js lib/http/router.js \| sort -u` → `../format` немає |
 | 18 | Карта: «26 HTTP-маршрутів» | ✅ | `grep -rhE "path: '" lib/*/routes.js \| wc -l` → 25, + `/health` (`server.js:29`) |

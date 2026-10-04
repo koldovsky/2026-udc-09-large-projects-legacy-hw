@@ -1,11 +1,10 @@
 // BILL-482 characterization: payment reminders as bin/send-reminders.js writes
 // them into the outbox for the SMTP relay.
 //
-// Two readers: the mail BODY is read by the customer (a person) — its due date
-// goes through format.formatDate and is meant to change with the ticket. The
-// file NAME and the To:/Subject: block are read by the relay (a system) and must
-// stay as they are. The exact-output test is expected to go red with BILL-482;
-// the relay test and the "apart from the date format" test must stay green.
+// Two readers: the mail BODY is read by the customer (a person) — since BILL-482
+// its due date is DD.MM.YYYY (format.formatDateUa; the golden was updated for the
+// date format only). The file NAME and the To:/Subject: block are read by the
+// relay (a system) and must stay as they are.
 var test = require('node:test');
 var assert = require('node:assert/strict');
 var childProcess = require('child_process');
@@ -43,7 +42,7 @@ function golden(name) {
   return fs.readFileSync(path.join(GOLDEN, name), 'utf8');
 }
 
-// MM/DD/YYYY (today) and DD.MM.YYYY (after BILL-482) both become YYYY-MM-DD,
+// MM/DD/YYYY (before BILL-482) and DD.MM.YYYY (after) both become YYYY-MM-DD,
 // so whatever is left must not change with the ticket
 function canonDates(s) {
   return s
