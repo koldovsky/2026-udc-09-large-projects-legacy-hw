@@ -11,8 +11,8 @@ Keep the style: no ESM, no async/await, no new dependencies.
 
 ## 1. `app/docs/ARCHITECTURE.md` is out of date. Do not use it.
 
-Version 2.0, **May 2019**. Every structural claim in it is now false. Checked
-one by one in `../docs/codebase-map.md` §3:
+Version 2.0, **May 2019**. Nine of its ten claims are false today and the tenth
+is only half true. Checked one by one in `../docs/codebase-map.md` §3:
 
 | It says | Reality |
 |---|---|
@@ -24,6 +24,7 @@ one by one in `../docs/codebase-map.md` §3:
 | "formatting for humans only in templates" | two independent formatters: `lib/format.js` and `lib/reports/table.js` |
 | "external integrations: SMTP only, accounting picks the CSV up by hand" | **false and dangerous — see §2** |
 | `npm install`, port 3000, Node 8+, MongoDB 3.6 | no deps, port 8080, Node >= 22, no Mongo |
+| "all dates are stored **and transmitted** as ISO 8601" | the half-true one: stored as ISO, yes — but the nightly CSV transmits `MM/DD/YYYY` (§2), so do not read this as "ISO everywhere" |
 
 `app/docs/integrations/oblik-plus.md` **is** current and accurate. Trust that one.
 
@@ -45,6 +46,13 @@ error. It is skipped.** A warning lands in their import log, which nobody reads.
 No exception here, no mail from them, green tests. In February 2021 forty
 invoices vanished this way and it took three weeks to notice, via a VAT
 mismatch.
+
+This is not hypothetical, and it is not only a 2021 story. It was measured on
+this codebase: a model given only the BILL-482 ticket, with this file absent,
+changed `formatDate` in place, got **106/106 green**, and reported "no other
+functionality was broken" — while **all 36 invoices in `data/`** had become
+unparsable for the import. Full run in `../docs/ai-on-legacy.md` §1. Assume a
+green suite tells you nothing about this file.
 
 So: **before changing anything about how dates or amounts are formatted, check
 what happens to this file.** `test/export/accounting.test.js` holds a golden
