@@ -84,6 +84,23 @@ test('send-reminders queues 7 mails for ' + DAY, function () {
   assert.equal(stdout, '7 reminder(s) queued\n');
 });
 
+test('without a date, as cron calls it, mail files are named by today in UTC', function () {
+  // every other test passes the date; production does not. The 27 seeded unpaid
+  // invoices stay overdue (nobody sets overdue_reminded), so there is mail to name
+  var d = appCopy();
+  var before = new Date().toISOString().slice(0, 10);
+  var out = run(d, 'send-reminders.js', []);
+  var after = new Date().toISOString().slice(0, 10);
+  var list = readOutbox(d);
+  assert.ok(list.length > 0);
+  assert.equal(out, list.length + ' reminder(s) queued\n');
+  list.forEach(function (f) {
+    assert.match(f.name, /^\d{4}-\d{2}-\d{2}-(upcoming|overdue)-\d+\.txt$/);
+    // before !== after only across UTC midnight
+    assert.ok(f.name.slice(0, 10) === before || f.name.slice(0, 10) === after, f.name);
+  });
+});
+
 test('every mail file is exactly the pinned one (names, headers and bodies)', function () {
   assert.equal(allMail(files), golden('reminders-' + DAY + '.txt'));
 });

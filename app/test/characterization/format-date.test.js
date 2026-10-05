@@ -51,3 +51,19 @@ test('formatDate: empty or unparsable input -> empty string', function () {
 test('formatDate: an impossible date rolls over (looks like a bug — pinned, not fixed)', function () {
   assert.equal(format.formatDate('2026-02-30'), '03/02/2026');
 });
+
+// Added after mutation testing (docs/task-e-bonus.md). formatDateUa (BILL-482) is
+// otherwise reached only through the goldens, and every seeded invoice has both
+// dates, so its guards never ran.
+test('formatDateUa: empty or unparsable input -> empty string', function () {
+  ['', null, undefined, 'not a date'].forEach(function (v) {
+    assert.equal(format.formatDateUa(v), '', String(v));
+  });
+});
+
+test('a date that is not zero-padded is unparsable, in both formatters', function () {
+  // toDate parses '2026-3-9T00:00:00Z', which is invalid. Without the 'T00:00:00Z'
+  // V8 would take '2026-3-9' as LOCAL midnight: a date, and a day early east of UTC
+  assert.equal(format.formatDate('2026-3-9'), '');
+  assert.equal(format.formatDateUa('2026-3-9'), '');
+});

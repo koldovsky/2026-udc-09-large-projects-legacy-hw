@@ -64,6 +64,20 @@ test('nightly-export writes oblik-YYYY-MM-DD.csv', function () {
   assert.equal(stdout, 'export written: ' + path.join('out', 'export', 'oblik-' + DAY + '.csv') + '\n');
 });
 
+test('without a date, as cron and npm run export call it, the file is named by today in UTC', function () {
+  // every other test passes the date; production does not (package.json "export")
+  var dir = appCopy();
+  var before = new Date().toISOString().slice(0, 10);
+  var out = run(dir, 'nightly-export.js', []);
+  var after = new Date().toISOString().slice(0, 10);
+  var day = [before, after].filter(function (d) {
+    // before !== after only across UTC midnight
+    return out === 'export written: ' + path.join('out', 'export', 'oblik-' + d + '.csv') + '\n';
+  })[0];
+  assert.ok(day, out);
+  assert.equal(fs.readFileSync(path.join(dir, 'out', 'export', 'oblik-' + day + '.csv'), 'utf8'), csv);
+});
+
 test('the Облік-Плюс file is byte for byte the pinned one', function () {
   assert.equal(csv, fs.readFileSync(path.join(GOLDEN, 'oblik-' + DAY + '.csv'), 'utf8'));
 });
