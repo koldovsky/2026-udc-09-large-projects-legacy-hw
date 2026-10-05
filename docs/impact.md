@@ -23,7 +23,7 @@
 
 ### Чому № 3 — найважливіший рядок цієї таблиці
 
-«Облік-Плюс» **не падає** на даті в чужому формати. Він **молча пропускає
+«Облік-Плюс» **не падає** на даті в чужому форматі. Він **мовчки пропускає
 рядок**, пише попередження у свій журнал імпорту, якого ніхто не читає. Ні
 помилки в нас, ні листа від них
 ([`oblik-plus.md:27-35`](../app/docs/integrations/oblik-plus.md#L27-L35)).
@@ -36,7 +36,7 @@
 тести і повторення інциденту 2021 року**: на цей експорт у репо не було
 **жодного** тесту (`grep -rln "accounting\|oblik" app/test/` → порожньо).
 
-### Хто **не** залежить (перевірено, щоб не чіпати лишнє)
+### Хто **не** залежить (перевірено, щоб не чіпати зайве)
 
 | Не споживач | Чому |
 |---|---|
@@ -92,7 +92,7 @@
 | те саме — `export contract: DocDate and PayUntil stay MM/DD/YYYY` | регексп `MM/DD/YYYY` на обох колонках дат **у кожному** рядку | так |
 | те саме — `a known invoice renders exactly as accounting expects` | один рахунок цілим рядком: `INV-2026-00007;03/07/2026;03/21/2026;…` | так |
 | те саме — `drafts are left out, other statuses are kept` | фільтр `status !== 'draft'` (у `data/` чернеток немає, тому на фікстурі) | так |
-| те саме — `export columns are resolved by type through lib/format.js` | саме́ динамічне зіставлення `type` → `format['format'+type]`, через яке споживач невидимий для `grep` | так |
+| те саме — `export columns are resolved by type through lib/format.js` | саме динамічне зіставлення `type` → `format['format'+type]`, через яке споживач невидимий для `grep` | так |
 | [`app/test/characterization/bill-482-dates.test.js`](../app/test/characterization/bill-482-dates.test.js) — `EXPECTED-TO-CHANGE formatDate renders MM/DD/YYYY today` | нинішній вихід `formatDate` (функція **не мала жодного тесту**) | так |
 | те саме — `MUST-NOT-CHANGE formatDate edge cases` | `''`, `null`, `undefined`, `'not-a-date'` → `''` | так |
 | те саме — `MUST-NOT-CHANGE formatDate reads the date in UTC` | `'2026-03-09T23:59:59+03:00'` → дата не «з'їжджає» на добу | так |
@@ -131,7 +131,7 @@ before the BILL-482 change». Зміна коду — в наступному к
 
 | Файл | Зміна |
 |---|---|
-| [`lib/format.js`](../app/lib/format.js) | **+** `formatDateUA`; `formatDate` без змін у тілі; виправлено JSDoc, який брехав («the date in ISO format» → `MM/DD/YYYY`), і додано попередження про молчазне пропускання рядків у «Облік-Плюс» |
+| [`lib/format.js`](../app/lib/format.js) | **+** `formatDateUA`; `formatDate` без змін у тілі; виправлено JSDoc, який брехав («the date in ISO format» → `MM/DD/YYYY`), і додано попередження про мовчазне пропускання рядків у «Облік-Плюс» |
 | [`lib/invoices/render.js`](../app/lib/invoices/render.js) | 2 виклики `formatDate` → `formatDateUA` |
 | [`lib/notifications/reminders.js`](../app/lib/notifications/reminders.js) | 2 виклики `formatDate` → `formatDateUA` (гілки `overdue` і `upcoming`) |
 
@@ -146,7 +146,7 @@ before the BILL-482 change». Зміна коду — в наступному к
 | `EXPECTED-TO-CHANGE upcoming reminder names the due date MM/DD/YYYY today` | так | **очікувано** — лист клієнту; тікет прямо його згадує | очікування → `23.03.2026` |
 | `EXPECTED-TO-CHANGE overdue reminder names the due date MM/DD/YYYY today` | так | **очікувано** — лист клієнту | очікування → `23.03.2026` |
 | `EXPECTED-TO-CHANGE the public HTML invoice route serves MM/DD/YYYY today` | так | **очікувано** — та сама сторінка `/invoices/INV-2026-00007` із тікета, end-to-end через `server.js` | очікування → `07.03.2026` / `21.03.2026` |
-| `rendered invoice shows number, customer, dates and totals` (**засіяний**, [`test/invoices.test.js:41-42`](../app/test/invoices.test.js#L41-L42)) | так | **очікувано** — єдиний засіяний тест, який фіксував американський формат у HTML-рахунку | очікування → `09.03.2026` / `23.03.2026`, з комментарем, що саме змінилось і чому |
+| `rendered invoice shows number, customer, dates and totals` (**засіяний**, [`test/invoices.test.js:41-42`](../app/test/invoices.test.js#L41-L42)) | так | **очікувано** — єдиний засіяний тест, який фіксував американський формат у HTML-рахунку | очікування → `09.03.2026` / `23.03.2026`, з коментарем, що саме змінилось і чому |
 | `EXPECTED-TO-CHANGE formatDate renders MM/DD/YYYY today` | **ні** | — | Лишився зеленим, бо `formatDate` навмисно не змінювали. Перейменовано на `MUST-NOT-CHANGE formatDate stays MM/DD/YYYY — it is the Облік-Плюс wire format`: ярлик був поставлений до того, як вибрали рішення, і тепер він неправильний |
 
 Нових тестів на `formatDateUA` додано 3 (формат, граничні випадки, і перевірка,
@@ -168,7 +168,7 @@ before the BILL-482 change». Зміна коду — в наступному к
   й вводить в оману. Від рядка `'format' + col.type` залежить
   `lib/export/accounting.js`, а `col.type` = `"Date"` приходить із JSON-конфіга.
   Перейменування функції зламало б експорт у рантаймі — і, що гірше, не на
-  тестах, а молча. Замість перейменування — попередження в JSDoc і запис у
+  тестах, а мовчки. Замість перейменування — попередження в JSDoc і запис у
   [`app/AGENTS.md`](../app/AGENTS.md).
 - **`config/export-columns.json`** — не чіпали: типи колонок міняти заборонено.
 - **`lib/legacy/templates.js`** — не чіпали, хоча його хелпер `dmy` уже робить
