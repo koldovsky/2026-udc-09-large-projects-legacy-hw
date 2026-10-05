@@ -1,4 +1,4 @@
-// BILL-482 characterization: lib/format.js formatDate exactly as it behaves today.
+// BILL-482 characterization: lib/format.js formatDate exactly as it behaves today (formatDateUa: at the end).
 //
 // Shared by the invoice HTML, the reminder mails AND (through
 // config/export-columns.json) the Облік-Плюс export. Changing this output
@@ -54,14 +54,14 @@ test('formatDate: an impossible date rolls over (looks like a bug — pinned, no
 
 // Added after mutation testing (docs/task-e-bonus.md). formatDateUa (BILL-482) is
 // otherwise reached only through the goldens, and every seeded invoice has both
-// dates, so its guards never ran.
+// dates, so its return '' branches never ran.
 test('formatDateUa: empty or unparsable input -> empty string', function () {
   ['', null, undefined, 'not a date'].forEach(function (v) {
     assert.equal(format.formatDateUa(v), '', String(v));
   });
 });
 
-test('a date that is not zero-padded is unparsable, in both formatters', function () {
+test('formatDate, formatDateUa: a date that is not zero-padded is unparsable', function () {
   // toDate parses '2026-3-9T00:00:00Z', which is invalid. Without the 'T00:00:00Z'
   // V8 would take '2026-3-9' as LOCAL midnight: a date, and a day early east of UTC
   assert.equal(format.formatDate('2026-3-9'), '');

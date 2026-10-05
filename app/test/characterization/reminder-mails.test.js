@@ -32,8 +32,8 @@ function appCopy() {
   return d;
 }
 
-function run(d, script, args) {
-  var r = childProcess.spawnSync(process.execPath, [path.join(d, 'bin', script)].concat(args), { cwd: d, encoding: 'utf8' });
+function run(d, script, args, env) {
+  var r = childProcess.spawnSync(process.execPath, [path.join(d, 'bin', script)].concat(args), { cwd: d, encoding: 'utf8', env: env });
   assert.equal(r.status, 0, r.error ? String(r.error) : 'signal=' + r.signal + '\n' + r.stderr);
   return r.stdout;
 }
@@ -84,23 +84,6 @@ test('send-reminders queues 7 mails for ' + DAY, function () {
   assert.equal(stdout, '7 reminder(s) queued\n');
 });
 
-test('without a date, as cron calls it, mail files are named by today in UTC', function () {
-  // every other test passes the date; production does not. The 27 seeded unpaid
-  // invoices stay overdue (nobody sets overdue_reminded), so there is mail to name
-  var d = appCopy();
-  var before = new Date().toISOString().slice(0, 10);
-  var out = run(d, 'send-reminders.js', []);
-  var after = new Date().toISOString().slice(0, 10);
-  var list = readOutbox(d);
-  assert.ok(list.length > 0);
-  assert.equal(out, list.length + ' reminder(s) queued\n');
-  list.forEach(function (f) {
-    assert.match(f.name, /^\d{4}-\d{2}-\d{2}-(upcoming|overdue)-\d+\.txt$/);
-    // before !== after only across UTC midnight
-    assert.ok(f.name.slice(0, 10) === before || f.name.slice(0, 10) === after, f.name);
-  });
-});
-
 test('every mail file is exactly the pinned one (names, headers and bodies)', function () {
   assert.equal(allMail(files), golden('reminders-' + DAY + '.txt'));
 });
@@ -129,4 +112,44 @@ test('file names and the To:/Subject: block — what the relay reads — are pin
     })
     .join('\n');
   assert.equal(actual, golden('reminders-' + DAY + '.relay.txt'));
+});
+
+// Added after mutation testing (docs/task-e-bonus.md): every test above passes
+// the date, while npm run reminders (package.json) runs the script without one.
+test('without a date, as npm run reminders calls it, mail files are named by today in UTC', function () {
+  var d = appCopy();
+  // a zone where the local date is never the UTC date, so a script that took the
+  // local date would name the files by another day
+  var env = Object.assign({}, process.env, { TZ: new Date().getUTCHours() < 12 ? 'Etc/GMT+12' : 'Etc/GMT-14' });
+  var before = new Date().toISOString().slice(0, 10);
+  var out = run(d, 'send-reminders.js', [], env);
+  var after = new Date().toISOString().slice(0, 10);
+  var list = readOutbox(d);
+  // the 27 seeded unpaid invoices stay overdue (nobody sets overdue_reminded)
+  assert.ok(list.length > 0, 'no mail in the outbox');
+  assert.equal(out, list.length + ' reminder(s) queued\n');
+  list.forEach(function (f) {
+    assert.match(f.name, /^\d{4}-\d{2}-\d{2}-(upcoming|overdue)-\d+\.txt$/);
+    // before !== after only across UTC midnight
+    assert.ok(f.name.slice(0, 10) === before || f.name.slice(0, 10) === after, f.name);
+  });
+});
+
+test('no email or no customer -> no file for the relay; no contact name -> a generic greeting', function () {
+  // email and contact_name are optional (lib/customers/validate.js), but every
+  // seeded customer has both, so the outbox above does not show this
+  var reminders = require('../../lib/notifications/reminders');
+  var inv = { id: 1, number: 'INV-X', status: 'issued', due_at: '2026-03-01', total_kopecks: 100, customer_id: 1 };
+  var mails = reminders.buildReminders(
+    [inv, Object.assign({}, inv, { id: 2, customer_id: 2 }), Object.assign({}, inv, { id: 3, customer_id: 3 })],
+    { 1: { email: '', contact_name: 'Олена' }, 2: { email: 'b@example.com' } },
+    DAY,
+  );
+  assert.deepEqual(
+    mails.map(function (m) {
+      return m.invoice_id + ' ' + m.to;
+    }),
+    ['2 b@example.com'],
+  );
+  assert.equal(mails[0].text.split('\n')[0], 'Шановний клієнте,');
 });

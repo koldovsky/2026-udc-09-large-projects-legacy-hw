@@ -37,8 +37,8 @@ function appCopy() {
   return d;
 }
 
-function run(d, script, args) {
-  var r = childProcess.spawnSync(process.execPath, [path.join(d, 'bin', script)].concat(args), { cwd: d, encoding: 'utf8' });
+function run(d, script, args, env) {
+  var r = childProcess.spawnSync(process.execPath, [path.join(d, 'bin', script)].concat(args), { cwd: d, encoding: 'utf8', env: env });
   assert.equal(r.status, 0, r.error ? String(r.error) : 'signal=' + r.signal + '\n' + r.stderr);
   return r.stdout;
 }
@@ -62,20 +62,6 @@ test.after(function () {
 
 test('nightly-export writes oblik-YYYY-MM-DD.csv', function () {
   assert.equal(stdout, 'export written: ' + path.join('out', 'export', 'oblik-' + DAY + '.csv') + '\n');
-});
-
-test('without a date, as cron and npm run export call it, the file is named by today in UTC', function () {
-  // every other test passes the date; production does not (package.json "export")
-  var dir = appCopy();
-  var before = new Date().toISOString().slice(0, 10);
-  var out = run(dir, 'nightly-export.js', []);
-  var after = new Date().toISOString().slice(0, 10);
-  var day = [before, after].filter(function (d) {
-    // before !== after only across UTC midnight
-    return out === 'export written: ' + path.join('out', 'export', 'oblik-' + d + '.csv') + '\n';
-  })[0];
-  assert.ok(day, out);
-  assert.equal(fs.readFileSync(path.join(dir, 'out', 'export', 'oblik-' + day + '.csv'), 'utf8'), csv);
 });
 
 test('the Облік-Плюс file is byte for byte the pinned one', function () {
@@ -112,4 +98,22 @@ test('every column type in export-columns.json names a function in lib/format.js
   columns.forEach(function (c) {
     assert.equal(typeof format['format' + c.type], 'function', 'format' + c.type);
   });
+});
+
+// Added after mutation testing (docs/task-e-bonus.md): every test above passes
+// the date, while npm run export (package.json) runs the script without one.
+test('without a date, as npm run export calls it, the file is named by today in UTC', function () {
+  var dir = appCopy();
+  // a zone where the local date is never the UTC date, so a script that took the
+  // local date would name the file by another day
+  var env = Object.assign({}, process.env, { TZ: new Date().getUTCHours() < 12 ? 'Etc/GMT+12' : 'Etc/GMT-14' });
+  var before = new Date().toISOString().slice(0, 10);
+  var out = run(dir, 'nightly-export.js', [], env);
+  var after = new Date().toISOString().slice(0, 10);
+  var day = [before, after].filter(function (d) {
+    // before !== after only across UTC midnight
+    return out === 'export written: ' + path.join('out', 'export', 'oblik-' + d + '.csv') + '\n';
+  })[0];
+  assert.ok(day, out);
+  assert.equal(fs.readFileSync(path.join(dir, 'out', 'export', 'oblik-' + day + '.csv'), 'utf8'), csv);
 });
