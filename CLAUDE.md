@@ -3,4 +3,5 @@
 See [AGENTS.md](./AGENTS.md) for context, conventions, and guardrails for this
 homework repo.
 
-Note: `app/AGENTS.md` does not exist yet — writing it is part of Task D.
+Before changing anything in `app/`, read [`app/AGENTS.md`](./app/AGENTS.md): contracts with other
+systems, traps and stale docs.
