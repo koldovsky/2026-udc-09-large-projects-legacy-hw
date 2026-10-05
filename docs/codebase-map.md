@@ -27,8 +27,8 @@
 
 ## 2. Карта (те, що видав агент, з вашими правками)
 
-Node ≥ 22, CommonJS, колбеки, **жодної npm-залежності**, 127 тестів (`node --test`): 106 початкових і 21 додано
-для BILL-482 (у Task B, до зміни коду).
+Node ≥ 22, CommonJS, колбеки, **жодної npm-залежності**, 133 тести (`node --test`): 106 початкових, 21 додано
+для BILL-482 (у Task B, до зміни коду) і 6 — після мутаційного тестування (Task E).
 
 _Правки після повторної перевірки:_
 - приклади тепер із реальних запусків;
@@ -143,7 +143,7 @@ _Після BILL-482 (Task C):_
 | 6 | «Усі дати зберігаються й передаються в ISO 8601» (`ARCHITECTURE.md:27-28`) | ❌ | Зберігаються — так (К2); передаються — ні: К1 → `03/01/2026` (`format.js:38`) |
 | 7 | «Гроші — цілі копійки» (`ARCHITECTURE.md:29`) | ✅ | К2: 372 поля `*_kopecks`, нецілих — 0 |
 | 8 | «Зовнішні інтеграції: тільки SMTP» (`ARCHITECTURE.md:30`) | ❌ | `grep -rni smtp lib bin server.js` → лише коментар; є виписка KB-2 (`payments/routes.js:61`), імпорт цін (`catalog/routes.js:92`), CSV для «Облік-Плюс» (`bin/nightly-export.js:24-25`) |
-| 9 | «`npm install`», «`npm start   # http://localhost:3000`» (`ARCHITECTURE.md:35-36`) | ❌ | Залежностей немає, `npm test` → усі 127 pass без `install`; порт 8080 (`config/default.json:7`) |
+| 9 | «`npm install`», «`npm start   # http://localhost:3000`» (`ARCHITECTURE.md:35-36`) | ❌ | Залежностей немає, `npm test` → усі 133 pass без `install`; порт 8080 (`config/default.json:7`) |
 | 10 | «Дата — `MM/DD/YYYY`» (`app/docs/integrations/oblik-plus.md:23`) | ✅ | `export-columns.json:3-4` (`Date`) → `accounting.js:30` → `format.js:38`; К1 |
 | 11 | «UTF-8, `;`, CRLF, заголовки першим рядком; суми з крапкою без «грн»; текст без `;`» (`oblik-plus.md:19-25`) | ✅ | `accounting.js:12-13,43-49`; `format.js:69-75,81-84`; `bin/nightly-export.js:25` (`'utf8'`); К1, К7 |
 | 12 | JSDoc `formatDate`: "the date in ISO format" (`format.js:27` до BILL-482) | ❌ | `git show fcab2c6:app/lib/format.js \| sed -n 27p` → цей текст; а функція повертала й повертає `MM/DD/YYYY` (`format.js:38`; К1 → `03/01/2026`). JSDoc виправлено в BILL-482 |

@@ -136,8 +136,8 @@ test('without a date, as npm run reminders calls it, mail files are named by tod
 });
 
 test('no email or no customer -> no file for the relay; no contact name -> a generic greeting', function () {
-  // email and contact_name are optional (lib/customers/validate.js), but every
-  // seeded customer has both, so the outbox above does not show this
+  // email and contact_name are optional (lib/customers/validate.js, index.js), but
+  // every seeded customer has both, so the outbox above does not show this
   var reminders = require('../../lib/notifications/reminders');
   var inv = { id: 1, number: 'INV-X', status: 'issued', due_at: '2026-03-01', total_kopecks: 100, customer_id: 1 };
   var mails = reminders.buildReminders(
