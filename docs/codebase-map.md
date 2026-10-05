@@ -112,7 +112,7 @@
 
 | # | Твердження | ✅/❌ | Доказ |
 |---|---|---|---|
-| 1 | «Billing — це **Express**-застосунок» (ARCHITECTURE.md:7) | ❌ | Свій роутер: [`lib/http/router.js`](../app/lib/http/router.js); у [`package.json`](../app/package.json) ключа `dependencies` немає взагалі. `grep -rin "express" app/` дає **один** збіг — комментар [`router.js:4`](../app/lib/http/router.js#L4): «We had Express until 2020; it was removed when the security audit flagged the…». Тобто код сам документує, що документація застаріла |
+| 1 | «Billing — це **Express**-застосунок» (ARCHITECTURE.md:7) | ❌ | Свій роутер: [`lib/http/router.js`](../app/lib/http/router.js); у [`package.json`](../app/package.json) ключа `dependencies` немає взагалі. `grep -rin "express" app --include="*.js"` дає **один** збіг — коментар [`router.js:4`](../app/lib/http/router.js#L4): «We had Express until 2020; it was removed when the security audit flagged the…». Тобто код сам документує, що документація застаріла |
 | 2 | «…із шаблонами **Handlebars**, усі сторінки рендеряться з `templates/`» (ARCHITECTURE.md:7-8) | ❌ | Теки `templates/` не існує (`ls app/templates` → No such file). HTML збирається конкатенацією рядків: [`lib/invoices/render.js:35-51`](../app/lib/invoices/render.js#L35-L51). Своє міні-Handlebars є, але мертве: [`lib/legacy/templates.js:14`](../app/lib/legacy/templates.js#L14) |
 | 3 | «Дані лежать у **MongoDB**» (ARCHITECTURE.md:8) | ❌ | JSON-файли через [`lib/store.js:26-45`](../app/lib/store.js#L26-L45); `ls app/data/*.json` → 8 файлів |
 | 4 | Модуль експорту — **`lib/export/csv.js`** (ARCHITECTURE.md:22) | ❌ | Файл зветься [`lib/export/accounting.js`](../app/lib/export/accounting.js); `csv.js` не існує |
@@ -165,4 +165,4 @@ PDF-сервіс), а документ — ні.
 Що з цього випливає для методу: у цьому репо **жодне твердження про поведінку
 не можна брати з прози** — ні з `app/docs/`, ні з JSDoc, ні з назв файлів.
 Перевірка — тільки виконуваним кодом: `grep` по тілу, запуск функції, golden
-master. Усі 18 рядків таблиці перевірені або командою, або файлом:рядком.
+master. Усі 19 рядків таблиці перевірені або командою, або файлом:рядком.
