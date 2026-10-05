@@ -43,5 +43,16 @@ BILL-482 змінює відображення дат у рахунку для �
 
 ## 5. Після зміни (Task C)
 
-Ще не виконувалося. У Task C потрібно змінити лише гілку HTML-рахунку,
-зберігши зафіксовані формати reminders і CSV.
+Змінено лише HTML-renderer рахунку: його локальний `formatInvoiceDate`
+перетворює результат спільного `format.formatDate` з `MM/DD/YYYY` на
+`DD.MM.YYYY`. Спільний форматер не змінювався.
+
+Оновлено чотири expectations у `app/test/invoices.test.js`: дві дати в
+перевірці HTML-renderer і дві дати в перевірці HTTP endpoint. Це навмисна
+зміна BILL-482; CLI використовує той самий renderer, тому його HTML також
+має новий формат.
+
+`app/test/reminders.test.js` залишив expectation `03/12/2026` зеленим, що
+підтверджує незмінність текстових reminders. `app/test/export.test.js`
+залишив expectation `03/09/2026;03/23/2026` зеленим, що підтверджує
+незмінність CSV-контракту «Облік-Плюс».

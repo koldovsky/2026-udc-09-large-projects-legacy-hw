@@ -43,8 +43,8 @@ test('rendered invoice shows number, customer, dates and totals', function () {
   var html = render.renderInvoiceHtml(invoice, customer);
   assert.match(html, /Рахунок-фактура № INV-2026-00007/);
   assert.match(html, /ЄДРПОУ 10000001/);
-  assert.match(html, /Дата: <b>03\/09\/2026<\/b>/);
-  assert.match(html, /Сплатити до: <b>03\/23\/2026<\/b>/);
+  assert.match(html, /Дата: <b>09\.03\.2026<\/b>/);
+  assert.match(html, /Сплатити до: <b>23\.03\.2026<\/b>/);
   assert.match(html, /До сплати: 1 200,00 грн/);
 });
 
@@ -53,7 +53,7 @@ test('rendered invoice escapes HTML in customer names', function () {
   assert.ok(html.indexOf('<script>x') === -1);
 });
 
-test('GET /invoices/:number keeps MM/DD/YYYY in the final HTML response', function (t, done) {
+test('GET /invoices/:number shows DD.MM.YYYY in the final HTML response', function (t, done) {
   var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'billing-invoice-routes-'));
   fs.writeFileSync(path.join(dir, 'customers.json'), JSON.stringify([customer]));
   fs.writeFileSync(path.join(dir, 'invoices.json'), JSON.stringify([Object.assign({ id: 7, customer_id: 1 }, invoice)]));
@@ -65,8 +65,8 @@ test('GET /invoices/:number keeps MM/DD/YYYY in the final HTML response', functi
     fs.rmSync(dir, { recursive: true, force: true });
     assert.ifError(err);
     assert.equal(status, 200);
-    assert.match(html, /Дата: <b>03\/09\/2026<\/b>/);
-    assert.match(html, /Сплатити до: <b>03\/23\/2026<\/b>/);
+    assert.match(html, /Дата: <b>09\.03\.2026<\/b>/);
+    assert.match(html, /Сплатити до: <b>23\.03\.2026<\/b>/);
     done();
   });
 });
