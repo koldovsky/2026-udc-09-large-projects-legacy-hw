@@ -17,7 +17,14 @@
 
 Перевірено й **не залежать**: звіти (`app/lib/reports/*` — власні ISO-дати й
 `monthName`), JSON API (віддає ISO зі сховища), `payments`, `catalog`,
-`customers`, `orders`, `audit` — `formatDate` не імпортують.
+`customers`, `orders`, `audit`. Підстава — пошук імпортів модуля `format`
+(`require(...format...)`, `formatDate`, `format[`) по всьому `app` без
+`node_modules`: модуль підключають лише `render.js`, `reminders.js` і
+`accounting.js` (плюс тест). Це висновок із пошуку за імпортами, а не
+побудковий аналіз усіх модулів: динамічний доступ (як `format['format' + col.type]`
+в `accounting.js`) знайдено саме тому, що `accounting.js` імпортує `format`;
+споживача без імпорту `format` такий пошук не виявив би, і в перелічених
+модулях такого імпорту немає.
 
 ## 3. Як ви їх шукали
 
