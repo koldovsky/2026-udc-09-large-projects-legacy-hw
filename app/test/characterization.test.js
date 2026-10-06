@@ -50,6 +50,13 @@ test('consumer 2 (human): reminder mails, upcoming and overdue', function () {
   expectGolden('reminders.txt', JSON.stringify(upcoming.concat(overdue), null, 2) + '\n');
 });
 
+test('consumer 3 (machine): drafts are not exported', function () {
+  var s = seed();
+  var draft = Object.assign({}, s.invoices[1], { number: 'INV-DRAFT-1', status: 'draft' });
+  var file = accounting.buildAccountingFile([draft], s.customers);
+  assert.equal(file, 'DocNo;DocDate;PayUntil;Edrpou;Counterparty;NetAmount;Vat;Amount\r\n');
+});
+
 test('consumer 3 (machine): nightly accounting CSV for Облік-Плюс stays MM/DD/YYYY', function () {
   var s = seed();
   var file = accounting.buildAccountingFile(s.invoices, s.customers);
