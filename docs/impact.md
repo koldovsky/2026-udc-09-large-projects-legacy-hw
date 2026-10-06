@@ -51,8 +51,13 @@
 
 ## 5. Після зміни (Task C)
 
-_Заповнюється в Task C._
+Що зроблено: у `app/lib/format.js` додано `formatDateUk` (`DD.MM.YYYY`); `render.js` і `reminders.js` викликають її замість `formatDate`. `formatDate` (`MM/DD/YYYY`) не змінено — нею далі користується експорт через `type: "Date"`, конфіг не чіпали. У JSDoc `formatDate` виправлено хибне «ISO» і додано попередження про контракт з бухгалтерією.
 
 | Тест | Почервонів? | Очікувано чи регресія? | Що зробили |
 |---|---|---|---|
-| | | | |
+| `characterization` · invoice HTML (+ `golden/invoice-INV-2026-00007.html`) | так | **очікувано**: людина-клієнт, `03/07/2026` → `07.03.2026`, `03/21/2026` → `21.03.2026` (тікет) | оновлено еталон, лише рядок із датами |
+| `characterization` · reminder mails (+ `golden/reminders.txt`) | так | **очікувано**: людина-клієнт, `03/12/2026` → `12.03.2026` в обох листах (тікет називає листи явно) | оновлено еталон, лише два рядки з датою |
+| `invoices.test.js` · rendered invoice shows number, customer, dates and totals | так | **очікувано**: той самий HTML-рахунок, `03/09/2026` → `09.03.2026`, `03/23/2026` → `23.03.2026` | оновлено два регулярні вирази |
+| `characterization` · nightly accounting CSV (+ `golden/accounting-export.csv`) | **ні** | — читає інша система, нічого не мало змінитись | еталон не чіпали (`git diff` порожній) |
+
+Усього: `npm test` — 109 зелених. `app/data/*.json` і `config/` не змінені.

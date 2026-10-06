@@ -24,13 +24,24 @@ function toDate(value) {
  * Format a date for display.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} MM/DD/YYYY. NOT for people: this is the contract with the
+ *   accounting import (docs/integrations/oblik-plus.md); use formatDateUk.
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Date for people (invoices, mails): DD.MM.YYYY.
+ */
+function formatDateUk(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +86,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUk: formatDateUk,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,
