@@ -21,16 +21,27 @@ function toDate(value) {
 }
 
 /**
- * Format a date for display.
+ * Date for machines: MM/DD/YYYY. The Oblik Plus export depends on it
+ * (column type "Date"), do not change: docs/integrations/oblik-plus.md
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} MM/DD/YYYY
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Date for people (invoices, reminder mails): DD.MM.YYYY, BILL-482.
+ */
+function formatDateUk(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +86,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUk: formatDateUk,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

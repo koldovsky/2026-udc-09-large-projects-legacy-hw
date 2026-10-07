@@ -31,3 +31,11 @@ test('formatDate: current output is MM/DD/YYYY (characterization, BILL-482)', fu
   assert.equal(format.formatDate(''), '');
   assert.equal(format.formatDate('not a date'), '');
 });
+
+test('formatDateUk: DD.MM.YYYY for customer-facing dates (BILL-482)', function () {
+  assert.equal(format.formatDateUk('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUk('2026-12-31T23:00:00Z'), '31.12.2026');
+  assert.equal(format.formatDateUk(new Date(Date.UTC(2026, 0, 5))), '05.01.2026');
+  assert.equal(format.formatDateUk(''), '');
+  assert.equal(format.formatDateUk('not a date'), '');
+});

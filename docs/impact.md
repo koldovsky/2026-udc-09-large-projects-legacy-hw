@@ -62,7 +62,7 @@
 Тести лише читають `data/*.json`. Еталони перегенеровуються командою
 `UPDATE_GOLDEN=1 node --test test/characterization.test.js`.
 
-Коміт із тестами (до зміни): `<hash — див. git log, «Task B: characterization tests and impact analysis»>`
+Коміт із тестами (до зміни): `9f2b29e` — «Task B: characterization tests and impact analysis»
 
 Очікування на Task C:
 - `invoices.html` і `reminders.txt` **мають** почервоніти (очікувано).
@@ -73,4 +73,22 @@
 
 | Тест | Почервонів? | Очікувано (вихід мав змінитись) чи регресія? | Що зробили |
 |---|---|---|---|
-| _заповнюється в Task C_ | | | |
+| `characterization.test.js` → invoice HTML | так | **Очікувано.** HTML рахунку читає клієнт; тікет просить `дд.мм.рррр` | Перегенеровано лише цей еталон (`--test-name-pattern="customer-facing"`). Перевірка: після заміни `дд.мм.рррр` → `MM/DD/YYYY` новий `invoices.html` байт у байт збігається з версією з `9f2b29e`, отже змінились тільки дати |
+| `characterization.test.js` → reminder mails | так | **Очікувано.** Листи читає клієнт; тікет прямо називає «сплатити до 03/12/2026» | Так само: перегенеровано, перевірено зворотною заміною, що змінились лише дати (51 лист) |
+| `characterization.test.js` → Oblik Plus CSV | **ні** | — (вихід для іншої системи, не мав змінитись) | Нічого. `git diff test/golden/oblik.csv` порожній. Реальний `buildAccountingFile` по `data/` = еталон із `9f2b29e` (`cmp`) |
+| `format.test.js` → formatDate MM/DD/YYYY | **ні** | — | Нічого: `formatDate` не змінювали, він і далі живить CSV |
+| засіяний `invoices.test.js` → «rendered invoice shows … dates» (`:41-42`) | так | **Очікувано.** Він фіксував клієнтський HTML у старому форматі `03/09/2026` | Очікування змінено на `09.03.2026` / `23.03.2026`, решту тесту не чіпали |
+
+**Рішення.** `formatDate` не змінювали. Додали `formatDateUk` (`дд.мм.рррр`) у
+`app/lib/format.js` і перевели на нього лише двох клієнтських споживачів:
+`invoices/render.js:38-39` і `notifications/reminders.js:40,46`. CSV
+(`export/accounting.js`, тип колонки `Date`) і далі отримує `MM/DD/YYYY` — для
+«Облік-Плюс» нічого не змінилося. Це той самий поділ, що вже є для грошей
+(`formatMoney` для людей, `formatDecimal` для машин). JSDoc `formatDate`, який
+неправильно казав «ISO format», виправлено. Тепер там сказано, що це машинний
+формат для CSV і що його не можна міняти.
+
+Новий тест `format.test.js` → `formatDateUk` фіксує новий контракт. Разом:
+`npm test` → `tests 111, pass 111, fail 0`. Наскрізна перевірка:
+`bin/render-invoice.js INV-2026-00007` і `GET /invoices/INV-2026-00007` дають
+`Дата: 07.03.2026 · Сплатити до: 21.03.2026`.
