@@ -81,7 +81,7 @@
 | `app/test/export/accounting.test.js` (новий файл) — `accounting export: DocDate/PayUntil stay MM/DD/YYYY` | Golden master повного CSV-рядка для «Облік-Плюс»: `DocDate`/`PayUntil` → `MM/DD/YYYY` | так |
 | `app/test/export/accounting.test.js` — `missing dates render as empty cells` | Що порожня/відсутня дата дає порожню клітинку, а не падіння | так |
 
-Коміт із тестами (до зміни): `<заповнити після коміту>`
+Коміт із тестами (до зміни): `0027324`
 
 ## 5. Після зміни (Task C)
 
