@@ -20,7 +20,7 @@
 | CLI: вивантаження | `npm run export` створює експорт бухгалтерії у `out/export/`. | `app/package.json`, `app/bin/nightly-export.js` |
 | CLI: нагадування | `npm run reminders` створює файли нагадувань у `out/mail/`. | `app/package.json`, `app/bin/send-reminders.js` |
 | CLI: інші утиліти/cron | `monthly-report.js` формує місячний звіт; `render-invoice.js` рендерить один рахунок; `import-statement.js` імпортує банківську виписку; `fix-2022-duplicate-customers.js` — одноразова утиліта. | `app/bin/*.js` |
-| Окремий cron процес | Ротація журналу аудиту винесена в `app/lib/audit/retention.js`; коментар описує cron, хоча це не файл у `bin/`. | `app/lib/audit/retention.js` |
+| Історична команда retention | `app/lib/audit/retention.js` містить команду cron для старого сервера; поточний запуск у репозиторії не підтверджено. | `app/lib/audit/retention.js` |
 
 ### Модулі
 
