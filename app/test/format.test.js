@@ -23,3 +23,11 @@ test('formatText: trims and strips separators', function () {
 test('formatPercent', function () {
   assert.equal(format.formatPercent(20), '20%');
 });
+
+test('formatDate: current output is MM/DD/YYYY (characterization, BILL-482)', function () {
+  assert.equal(format.formatDate('2026-03-09'), '03/09/2026');
+  assert.equal(format.formatDate('2026-12-31T23:00:00Z'), '12/31/2026');
+  assert.equal(format.formatDate(new Date(Date.UTC(2026, 0, 5))), '01/05/2026');
+  assert.equal(format.formatDate(''), '');
+  assert.equal(format.formatDate('not a date'), '');
+});
