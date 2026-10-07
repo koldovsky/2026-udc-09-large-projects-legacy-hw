@@ -60,12 +60,12 @@
 |---|---|---|---|
 | 1 | Застосунок працює на Express. | ❌ | `app/server.js:5-7,32` імпортує Node `http` та власний `Router`; `app/lib/http/router.js:4` прямо каже, що Express прибрали у 2020. |
 | 2 | Дані зберігаються в MongoDB. | ❌ | `app/lib/store.js:2-4,14-15,21-35` описує JSON database і читає `<name>.json`; `app/data/` містить JSON-колекції. |
-| 3 | Сервер слухає порт 3000. | ❌ | `app/config/default.json:6` задає 8080; `app/server.js:38-40` бере `PORT` або цей config. |
+| 3 | Сервер слухає порт 3000. | ❌ | `app/config/default.json:7` задає 8080; `app/server.js:38-40` бере `PORT` або цей config. |
 | 4 | Для запуску обов'язкові npm залежності та `npm install`. | ❌ | `app/package.json` не має `dependencies`; `app/README.md:17` каже, що залежностей немає. |
 | 5 | HTTP-маршрути рахунків та інших доменів підключаються через server. | ✅ | `app/server.js:10-18,20-25` перелічує route modules і передає їх router-у. |
 | 6 | Є окремий нічний CSV для бухгалтерії, який система бухгалтерії отримує автоматично. | ✅ | `app/bin/nightly-export.js:3-4` називає нічний експорт і забір о 06:00; контракт деталізує `app/docs/integrations/oblik-plus.md:8-13`. |
-| 7 | «Облік-Плюс» приймає дати у форматі `YYYY-MM-DD`. | ❌ | Контракт у `app/docs/integrations/oblik-plus.md:19-23` вимагає `MM/DD/YYYY`; реалізація — `app/lib/format.js:24-37` та `app/lib/export/accounting.js:26-33`. |
-| 8 | Усі дати форматуються лише в HTML-шаблонах. | ❌ | `app/lib/invoices/render.js:38-39` форматує дату рахунку; `app/lib/notifications/reminders.js:39-46` форматує дату в тексті листа; CSV теж рендерить тип Date у `app/lib/export/accounting.js:26-33`. |
+| 7 | «Облік-Плюс» приймає дати у форматі `YYYY-MM-DD`. | ❌ | Контракт у `app/docs/integrations/oblik-plus.md:19-23` вимагає `MM/DD/YYYY`; реалізація — `app/lib/format.js:24-51` та `app/lib/export/accounting.js:29-35`. |
+| 8 | Усі дати форматуються лише в HTML-шаблонах. | ❌ | `app/lib/invoices/render.js:38-39` форматує дату рахунку; `app/lib/notifications/reminders.js:39-46` форматує дату в тексті листа; CSV теж рендерить тип Date у `app/lib/export/accounting.js:29-35`. |
 | 9 | SMTP налаштований як зовнішній інтеграційний клієнт. | ❌ | `app/bin/send-reminders.js:4` каже, що relay забирає файли; `app/config/default.json:8` задає outbox, а не SMTP host/credentials. |
 | 10 | Щоб згенерувати рахунок, використовується PDF-сервіс. | ⚠️ Частково | `app/lib/legacy/pdf-client.js:2,19` має PDF-render HTTP-клієнт, але HTML рахунку генерує `app/lib/invoices/render.js:1-7`; маршрут повертає HTML (`app/lib/invoices/routes.js`). Отже, HTML-рахунок з тікета — не обов'язково PDF-сервіс. |
 | 11 | `import-statement.js` досі запускається за cron. | ❌ | `app/bin/import-statement.js:8-10` коментар каже, що cron вимкнули й не ввімкнули назад; файл лишився ручною утилітою. |
