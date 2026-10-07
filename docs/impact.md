@@ -59,4 +59,19 @@
 
 ## 5. Після зміни (Task C)
 
-_Заповнюється в Task C._ 
+**Як зроблено.** `formatDate` **не змінено**. Її через тип колонки `Date` викликає експорт для «Облік-Плюс», а там `MM/DD/YYYY` має лишитися. Тип колонки в `config/export-columns.json` теж не чіпали (`oblik-plus.md:13`: «Типи колонок не міняти»). Натомість у `lib/format.js` додано `formatDateUa` (`дд.мм.рррр`), і на неї переведено лише два клієнтські споживачі: `lib/invoices/render.js:38-39` і `lib/notifications/reminders.js:40,46`. JSDoc `formatDate` виправлено: він обіцяв «ISO», тепер описує реальний формат і застерігає, що від нього залежить експорт. `lib/export/accounting.js`, `config/` і `data/` не змінені.
+
+| Тест | Почервонів? | Очікувано (вихід мав змінитись) чи регресія? | Що зробили |
+|---|---|---|---|
+| `invoice HTML for INV-2026-00007 matches the golden master` | так | **Очікувано.** HTML-рахунок читає клієнт, тікет прямо називає `/invoices/INV-2026-00007` | Оновили `golden/invoice-INV-2026-00007.html` (`UPDATE_GOLDEN=1`). Diff — рівно 2 токени: `03/07/2026` → `07.03.2026`, `03/21/2026` → `21.03.2026` |
+| `bin/render-invoice.js prints the same HTML …` | так | **Очікувано.** Той самий рендер, CLI-шлях | Той самий еталон, окремих змін не треба |
+| `reminder mails for 2026-03-20 match the golden master` | так | **Очікувано.** Листи читають клієнти, тікет: «там теж сплатити до 03/12/2026» | Оновили `golden/reminders-2026-03-20.json`. Diff — 18 рядків, у кожному лише дата «до …» (`03/16/2026` → `16.03.2026` тощо). Адресати, теми, суми не змінилися |
+| засіяний `test/invoices.test.js` — `rendered invoice shows … dates` | так | **Очікувано** — та сама клієнтська дата | `03\/09\/2026` → `09\.03\.2026`, `03\/23\/2026` → `23\.03\.2026` (`test/invoices.test.js:41-42`) |
+| `accounting export: whole file matches the golden master` | **ні** | — (інша система, мало лишитись як є) | Нічого. Додатково: `node bin/nightly-export.js 2099-01-01` + `cmp` з `golden/oblik-export.csv` → ідентичні |
+| `accounting export: DocDate / PayUntil are MM/DD/YYYY …` | **ні** | — | Нічого |
+| `formatDate: current output is MM/DD/YYYY …` | **ні** | — (`formatDate` свідомо не змінювали) | Нічого |
+| новий `test/format.test.js` — `formatDateUa: DD.MM.YYYY …` | — (новий) | — | Фіксує новий формат, `''` для порожніх і невалідних значень |
+
+`cd app && npm test` → **113 / 113** (106 засіяних + 6 характеризаційних + 1 новий).
+
+**Жоден вихід, який читає інша система, не змінився.** CSV для «Облік-Плюс» збігається з еталоном, записаним до зміни (`7b57e3f`), байт-у-байт. Звіти та JSON API `lib/format.js` не використовують (розділ 2).
