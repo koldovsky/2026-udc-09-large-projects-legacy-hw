@@ -82,5 +82,5 @@ way and keep diffs small.
 
 ## Verify
 
-`npm test` (111 tests). For any change near formatting, check that
+`npm test` (114 tests). For any change near formatting, check that
 `git diff test/golden/oblik.csv` is empty.

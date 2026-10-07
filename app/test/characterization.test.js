@@ -55,3 +55,10 @@ test('reminder mails on 2026-03-12, 2026-03-20, 2026-04-01 (customer-facing)', f
 test('Oblik Plus accounting CSV, byte for byte (read by another system)', function () {
   golden('oblik.csv', accounting.buildAccountingFile(invoices, customers));
 });
+
+test('Oblik Plus CSV leaves out draft invoices (data/ has none, so pin it inline)', function () {
+  var draft = { id: 999, number: 'INV-2026-99999', customer_id: 1, status: 'draft', issued_at: '2026-03-01', due_at: '2026-03-15', subtotal_kopecks: 100, vat_kopecks: 20, total_kopecks: 120 };
+  var withDraft = accounting.buildAccountingFile(invoices.concat([draft]), customers);
+  assert.equal(withDraft, accounting.buildAccountingFile(invoices, customers));
+  assert.equal(withDraft.indexOf('INV-2026-99999'), -1);
+});
