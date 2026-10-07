@@ -1,0 +1,3 @@
+# Golden masters are compared byte for byte (the export uses CRLF on purpose).
+# Keep git from converting line endings on checkout (core.autocrlf).
+* -text
