@@ -70,10 +70,10 @@ test('invoice HTML for every fixture invoice matches the golden master', functio
   golden('invoices.html.txt', out);
 });
 
-test('invoice HTML: date line as it is today', function () {
+test('invoice HTML: date line in DD.MM.YYYY (BILL-482)', function () {
   var inv = fixture('invoices').filter(function (i) { return i.number === 'INV-2026-00007'; })[0];
   var html = render.renderInvoiceHtml(inv, customersById()[inv.customer_id]);
-  assert.match(html, /<p class="dates">Дата: <b>03\/07\/2026<\/b> · Сплатити до: <b>03\/21\/2026<\/b><\/p>/);
+  assert.match(html, /<p class="dates">Дата: <b>07\.03\.2026<\/b> · Сплатити до: <b>21\.03\.2026<\/b><\/p>/);
 });
 
 // --- consumer 2: reminder mails (bin/send-reminders.js -> out/mail) ----------
@@ -94,11 +94,11 @@ test('reminder mails for ' + REMINDER_DAY + ' match the golden master', function
   golden('reminders-' + REMINDER_DAY + '.txt', out);
 });
 
-test('reminder mails: due date wording as it is today', function () {
+test('reminder mails: due date in DD.MM.YYYY (BILL-482)', function () {
   var inv = { id: 5, number: 'INV-2026-00005', status: 'issued', due_at: '2026-03-12', total_kopecks: 99900, customer_id: 1 };
   var customers = { 1: { id: 1, email: 'client1@example.invalid', contact_name: 'Ірина' } };
-  assert.match(reminders.buildReminders([inv], customers, '2026-03-09')[0].text, /слід сплатити до 03\/12\/2026\./);
-  assert.match(reminders.buildReminders([inv], customers, '2026-03-13')[0].text, /мав бути сплачений до 03\/12\/2026\./);
+  assert.match(reminders.buildReminders([inv], customers, '2026-03-09')[0].text, /слід сплатити до 12\.03\.2026\./);
+  assert.match(reminders.buildReminders([inv], customers, '2026-03-13')[0].text, /мав бути сплачений до 12\.03\.2026\./);
 });
 
 // --- consumer 3: Облік-Плюс export (bin/nightly-export.js -> out/export) ------
