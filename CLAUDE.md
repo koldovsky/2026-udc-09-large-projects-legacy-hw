@@ -3,4 +3,6 @@
 See [AGENTS.md](./AGENTS.md) for context, conventions, and guardrails for this
 homework repo.
 
-Note: `app/AGENTS.md` does not exist yet — writing it is part of Task D.
+`app/AGENTS.md` holds the legacy system's own notes — contracts with other
+systems, traps, which of its docs are stale. Read it before touching anything
+under `app/`.
