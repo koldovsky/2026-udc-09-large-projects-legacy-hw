@@ -32,3 +32,18 @@ test('accounting export: missing dates render as empty cells, not a thrown error
   var csv = accounting.buildAccountingFile([Object.assign({}, invoice, { due_at: null })], { 1: customer });
   assert.match(csv, /INV-2026-00007;03\/09\/2026;;10000001/);
 });
+
+// Task E (mutation testing, docs/task-e-bonus.md): the draft filter and the
+// "unknown customer" cells had no test — mutants `inv.status !== 'draft'` ->
+// `true` and `customer ? customer.edrpou : ''` -> garbage survived. Both matter
+// for Облік-Плюс: drafts must never reach accounting, and a missing customer
+// must give empty cells, not junk or a thrown error.
+test('accounting export: drafts are skipped, unknown customer gives empty cells (Task E)', function () {
+  var draft = Object.assign({}, invoice, { number: 'INV-2026-00008', status: 'draft' });
+  var orphan = Object.assign({}, invoice, { number: 'INV-2026-00009', customer_id: 999 });
+  var csv = accounting.buildAccountingFile([invoice, draft, orphan], { 1: customer });
+  var rows = csv.split('\r\n').filter(Boolean);
+  assert.equal(rows.length, 3); // header + 2 rows: the draft is gone
+  assert.ok(csv.indexOf('INV-2026-00008') === -1);
+  assert.equal(rows[2], 'INV-2026-00009;03/09/2026;03/23/2026;;;1000.00;200.00;1200.00');
+});
