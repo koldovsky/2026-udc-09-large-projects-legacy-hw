@@ -27,6 +27,7 @@ function flatten(invoice, customer) {
 }
 
 function cell(col, row) {
+  if (col.type === 'Date') return format.formatDateUs(row[col.field]);
   var render = format['format' + col.type];
   if (typeof render !== 'function') {
     throw new Error('export-columns.json: unknown column type "' + col.type + '"');
