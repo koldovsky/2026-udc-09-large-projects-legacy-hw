@@ -30,20 +30,21 @@ test('reminder mail addresses the contact and names the amount', function () {
 });
 
 // Characterization (BILL-482): pins the due date exactly as it appears in the
-// mail body today — the same "03/12/2026" the ticket complains about. See
-// docs/impact.md. Both the upcoming and overdue wording share this value.
+// mail body. Before the ticket this was the "03/12/2026" the ticket complains
+// about; after it, the same date reads 12.03.2026 (дд.мм.рррр). See
+// docs/impact.md §5. Both the upcoming and overdue wording share this value.
 test('reminder mail date uses the shared formatter (characterization, BILL-482)', function () {
   var upcoming = reminders.buildReminders([inv], customers, '2026-03-09');
   assert.equal(
     upcoming[0].text,
-    'Ірина,\n\nнагадуємо, що рахунок INV-2026-00005 на суму 999,00 грн слід сплатити до 03/12/2026.\n\n' +
+    'Ірина,\n\nнагадуємо, що рахунок INV-2026-00005 на суму 999,00 грн слід сплатити до 12.03.2026.\n\n' +
       'З повагою,\nТОВ «Приклад Постач»',
   );
 
   var overdue = reminders.buildReminders([inv], customers, '2026-03-13');
   assert.equal(
     overdue[0].text,
-    'Ірина,\n\nрахунок INV-2026-00005 на суму 999,00 грн мав бути сплачений до 03/12/2026.\n' +
+    'Ірина,\n\nрахунок INV-2026-00005 на суму 999,00 грн мав бути сплачений до 12.03.2026.\n' +
       'Якщо ви вже сплатили — просто проігноруйте цей лист.\n\nЗ повагою,\nТОВ «Приклад Постач»',
   );
 });

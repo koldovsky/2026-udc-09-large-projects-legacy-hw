@@ -36,3 +36,15 @@ test('formatDate: current output is MM/DD/YYYY (characterization, BILL-482)', fu
   assert.equal(format.formatDate(null), '');
   assert.equal(format.formatDate('not-a-date'), '');
 });
+
+// BILL-482: the new customer-facing formatter. Same inputs as formatDate
+// above, so the two can be read side by side; same empty/invalid handling.
+test('formatDateUa: дд.мм.рррр for customers (BILL-482)', function () {
+  assert.equal(format.formatDateUa('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUa('2026-01-05'), '05.01.2026');
+  assert.equal(format.formatDateUa('2026-12-03'), '03.12.2026');
+  assert.equal(format.formatDateUa(new Date('2026-03-09T00:00:00Z')), '09.03.2026');
+  assert.equal(format.formatDateUa(''), '');
+  assert.equal(format.formatDateUa(null), '');
+  assert.equal(format.formatDateUa('not-a-date'), '');
+});
