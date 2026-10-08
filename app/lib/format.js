@@ -20,6 +20,13 @@ function toDate(value) {
   return new Date(String(value).slice(0, 10) + 'T00:00:00Z');
 }
 
+function parseValidDate(value) {
+  if (!value) return null;
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return null;
+  return d;
+}
+
 /**
  * Format a date for display.
  *
@@ -27,10 +34,21 @@ function toDate(value) {
  * @returns {string} the date in ISO format
  */
 function formatDate(value) {
-  if (!value) return '';
-  var d = toDate(value);
-  if (isNaN(d.getTime())) return '';
+  var d = parseValidDate(value);
+  if (!d) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Format a date for display to clients in UA format.
+ *
+ * @param {string|Date} value  YYYY-MM-DD string or a Date
+ * @returns {string} the date in DD.MM.YYYY format
+ */
+function formatDateUA(value) {
+  var d = parseValidDate(value);
+  if (!d) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +93,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUA: formatDateUA,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

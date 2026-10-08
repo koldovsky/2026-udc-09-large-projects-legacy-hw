@@ -1,0 +1,2 @@
+DocNo;DocDate;PayUntil;Edrpou;Counterparty;NetAmount;Vat;Amount
+INV-TEST-01;03/09/2026;03/23/2026;12345678;Test Customer;1000.00;200.00;1200.00
