@@ -20,17 +20,34 @@ function toDate(value) {
   return new Date(String(value).slice(0, 10) + 'T00:00:00Z');
 }
 
+function dateParts(value) {
+  if (!value) return null;
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return null;
+  return {
+    month: pad(d.getUTCMonth() + 1),
+    day: pad(d.getUTCDate()),
+    year: d.getUTCFullYear(),
+  };
+}
+
 /**
  * Format a date for display.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} the date in Ukrainian DD.MM.YYYY format
  */
 function formatDate(value) {
-  if (!value) return '';
-  var d = toDate(value);
-  if (isNaN(d.getTime())) return '';
-  return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+  var parts = dateParts(value);
+  return parts ? parts.day + '.' + parts.month + '.' + parts.year : '';
+}
+
+/**
+ * Date format required by the Облік-Плюс CSV import contract.
+ */
+function formatDateUs(value) {
+  var parts = dateParts(value);
+  return parts ? parts.month + '/' + parts.day + '/' + parts.year : '';
 }
 
 /**
@@ -75,6 +92,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUs: formatDateUs,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,
