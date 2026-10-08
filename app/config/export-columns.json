@@ -1,7 +1,7 @@
 [
   { "field": "number", "header": "DocNo", "type": "Text" },
-  { "field": "issued_at", "header": "DocDate", "type": "Date" },
-  { "field": "due_at", "header": "PayUntil", "type": "Date" },
+  { "field": "issued_at", "header": "DocDate", "type": "DateExport" },
+  { "field": "due_at", "header": "PayUntil", "type": "DateExport" },
   { "field": "customer_edrpou", "header": "Edrpou", "type": "Text" },
   { "field": "customer_name", "header": "Counterparty", "type": "Text" },
   { "field": "subtotal_kopecks", "header": "NetAmount", "type": "Decimal" },
