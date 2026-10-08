@@ -27,4 +27,5 @@ test('reminder mail addresses the contact and names the amount', function () {
   assert.equal(mails[0].to, 'client1@example.invalid');
   assert.match(mails[0].text, /^Ірина,/);
   assert.match(mails[0].text, /999,00 грн/);
+  assert.match(mails[0].text, /сплатити до 03\/12\/2026\./);
 });

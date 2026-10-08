@@ -25,6 +25,12 @@ function lineRow(line) {
   );
 }
 
+function formatInvoiceDate(value) {
+  var date = format.formatDate(value);
+  if (!date) return date;
+  return date.slice(3, 5) + '.' + date.slice(0, 2) + '.' + date.slice(6);
+}
+
 /**
  * @param {object} invoice   row from invoices.json
  * @param {object} customer  row from customers.json
@@ -35,8 +41,8 @@ function renderInvoiceHtml(invoice, customer) {
   html += '<!doctype html><html lang="uk"><head><meta charset="utf-8">';
   html += '<title>Рахунок ' + esc(invoice.number) + '</title></head><body>';
   html += '<h1>Рахунок-фактура № ' + esc(invoice.number) + '</h1>';
-  html += '<p class="dates">Дата: <b>' + esc(format.formatDate(invoice.issued_at)) + '</b>';
-  html += ' · Сплатити до: <b>' + esc(format.formatDate(invoice.due_at)) + '</b></p>';
+  html += '<p class="dates">Дата: <b>' + esc(formatInvoiceDate(invoice.issued_at)) + '</b>';
+  html += ' · Сплатити до: <b>' + esc(formatInvoiceDate(invoice.due_at)) + '</b></p>';
   html += '<p class="customer">Платник: ' + esc(customer ? customer.name : '—');
   if (customer && customer.edrpou) html += ' (ЄДРПОУ ' + esc(customer.edrpou) + ')';
   html += '</p>';
