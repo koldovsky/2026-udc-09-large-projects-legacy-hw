@@ -23,3 +23,25 @@ test('formatText: trims and strips separators', function () {
 test('formatPercent', function () {
   assert.equal(format.formatPercent(20), '20%');
 });
+
+test('formatDate: ISO string to MM/DD/YYYY (current behavior for Облік-Плюс compatibility)', function () {
+  assert.equal(format.formatDate('2026-03-09'), '03/09/2026');
+  assert.equal(format.formatDate('2026-12-31'), '12/31/2026');
+  assert.equal(format.formatDate('2025-01-01'), '01/01/2025');
+  assert.equal(format.formatDate('2026-03-09T00:00:00Z'), '03/09/2026');
+  assert.equal(format.formatDate(new Date('2026-03-09T00:00:00Z')), '03/09/2026');
+  assert.equal(format.formatDate(''), '');
+  assert.equal(format.formatDate(null), '');
+  assert.equal(format.formatDate(undefined), '');
+});
+
+test('formatDateClient: ISO string to DD.MM.YYYY (client-facing Ukrainian format)', function () {
+  assert.equal(format.formatDateClient('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateClient('2026-12-31'), '31.12.2026');
+  assert.equal(format.formatDateClient('2025-01-01'), '01.01.2025');
+  assert.equal(format.formatDateClient('2026-03-09T00:00:00Z'), '09.03.2026');
+  assert.equal(format.formatDateClient(new Date('2026-03-09T00:00:00Z')), '09.03.2026');
+  assert.equal(format.formatDateClient(''), '');
+  assert.equal(format.formatDateClient(null), '');
+  assert.equal(format.formatDateClient(undefined), '');
+});

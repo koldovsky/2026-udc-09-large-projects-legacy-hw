@@ -29,3 +29,22 @@ test('the same compiled template can be reused with different data', function ()
   assert.equal(tpl({ n: 1, title: 'Степлер' }), '1:Степлер');
   assert.equal(tpl({ n: 2, title: 'Скріпки' }), '2:Скріпки');
 });
+
+// --- Characterization test: golden master for date helper (dmy = DD.MM.YYYY) ---
+// This is a SEPARATE date formatter from lib/format.formatDate (which is MM/DD/YYYY).
+// It's used by the legacy Handlebars templates (removed in 2020, but helper remains).
+
+test('date helper (dmy): formats ISO date as DD.MM.YYYY (golden master)', function () {
+  var tpl = templates.compile('{{date issued_at}}');
+  assert.equal(tpl({ issued_at: '2026-03-09' }), '09.03.2026');
+  assert.equal(tpl({ issued_at: '2026-12-31' }), '31.12.2026');
+  assert.equal(tpl({ issued_at: '2025-01-01' }), '01.01.2025');
+  assert.equal(tpl({ issued_at: '' }), '');
+  assert.equal(tpl({ issued_at: null }), '');
+  assert.equal(tpl({ issued_at: undefined }), '');
+});
+
+test('date helper works inside expressions with dotted paths', function () {
+  var tpl = templates.compile('Дата: {{date invoice.issued_at}}');
+  assert.equal(tpl({ invoice: { issued_at: '2026-03-09' } }), 'Дата: 09.03.2026');
+});
