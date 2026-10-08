@@ -24,13 +24,27 @@ function toDate(value) {
  * Format a date for display.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} the date as MM/DD/YYYY; the Облік-Плюс export
+ *   (config/export-columns.json type "Date") depends on this exact format.
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Format a date for display, Ukrainian style.
+ *
+ * @param {string|Date} value  YYYY-MM-DD string or a Date
+ * @returns {string} the date in DD.MM.YYYY format
+ */
+function formatDateUa(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +89,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUa: formatDateUa,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,

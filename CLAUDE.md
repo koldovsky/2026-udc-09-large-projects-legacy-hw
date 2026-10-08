@@ -3,4 +3,5 @@
 See [AGENTS.md](./AGENTS.md) for context, conventions, and guardrails for this
 homework repo.
 
-Note: `app/AGENTS.md` does not exist yet — writing it is part of Task D.
+System knowledge for the billing app (contracts, traps, stale docs) is in
+`app/AGENTS.md` (Task D); `app/CLAUDE.md` imports it for sessions in `app/`.

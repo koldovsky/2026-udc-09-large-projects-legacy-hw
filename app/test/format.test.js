@@ -23,3 +23,12 @@ test('formatText: trims and strips separators', function () {
 test('formatPercent', function () {
   assert.equal(format.formatPercent(20), '20%');
 });
+
+test('formatDateUa: DD.MM.YYYY for display to customers', function () {
+  assert.equal(format.formatDateUa('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDateUa('2026-12-31'), '31.12.2026');
+  assert.equal(format.formatDateUa(new Date(Date.UTC(2026, 2, 9))), '09.03.2026');
+  assert.equal(format.formatDateUa(''), '');
+  assert.equal(format.formatDateUa(null), '');
+  assert.equal(format.formatDateUa('garbage'), '');
+});
