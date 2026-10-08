@@ -29,7 +29,7 @@ Baseline guidance for an Agentic IDE working in **this homework repo**.
   - the change itself in `app/lib/` (Task C)
   - `docs/ai-on-legacy.md` and `app/AGENTS.md` (Task D)
   - `docs/task-e-bonus.md` (Task E, bonus)
-- Templates for every document are in `docs/templates/`.
+- Templates for the documents in `docs/` are in `docs/templates/`.
 
 ## Guardrails
 
