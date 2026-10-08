@@ -1,0 +1,3 @@
+# The Облік-Плюс golden master pins CRLF line endings on purpose (BILL-482).
+# Keep git from normalizing them, or test/export/accounting.test.js is lying.
+test/golden/*.csv -text

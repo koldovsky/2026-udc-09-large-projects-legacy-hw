@@ -29,6 +29,8 @@ function subject(kind, invoice) {
     : 'Нагадування: рахунок ' + invoice.number;
 }
 
+// BILL-482: the customer reads these mails, so dates are DD.MM.YYYY via
+// formatDateUA — formatDate is the MM/DD/YYYY «Облік-Плюс» wire format.
 function body(kind, invoice, customer) {
   var who = customer && customer.contact_name ? customer.contact_name : 'Шановний клієнте';
   var lines = [];
@@ -37,13 +39,13 @@ function body(kind, invoice, customer) {
   if (kind === 'overdue') {
     lines.push(
       'рахунок ' + invoice.number + ' на суму ' + format.formatMoney(invoice.total_kopecks) +
-        ' мав бути сплачений до ' + format.formatDate(invoice.due_at) + '.',
+        ' мав бути сплачений до ' + format.formatDateUA(invoice.due_at) + '.',
     );
     lines.push('Якщо ви вже сплатили — просто проігноруйте цей лист.');
   } else {
     lines.push(
       'нагадуємо, що рахунок ' + invoice.number + ' на суму ' + format.formatMoney(invoice.total_kopecks) +
-        ' слід сплатити до ' + format.formatDate(invoice.due_at) + '.',
+        ' слід сплатити до ' + format.formatDateUA(invoice.due_at) + '.',
     );
   }
   lines.push('');

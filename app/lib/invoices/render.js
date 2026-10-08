@@ -35,8 +35,10 @@ function renderInvoiceHtml(invoice, customer) {
   html += '<!doctype html><html lang="uk"><head><meta charset="utf-8">';
   html += '<title>Рахунок ' + esc(invoice.number) + '</title></head><body>';
   html += '<h1>Рахунок-фактура № ' + esc(invoice.number) + '</h1>';
-  html += '<p class="dates">Дата: <b>' + esc(format.formatDate(invoice.issued_at)) + '</b>';
-  html += ' · Сплатити до: <b>' + esc(format.formatDate(invoice.due_at)) + '</b></p>';
+  // BILL-482: the customer reads this, so DD.MM.YYYY (not formatDate, which is
+  // the MM/DD/YYYY wire format for the «Облік-Плюс» export)
+  html += '<p class="dates">Дата: <b>' + esc(format.formatDateUA(invoice.issued_at)) + '</b>';
+  html += ' · Сплатити до: <b>' + esc(format.formatDateUA(invoice.due_at)) + '</b></p>';
   html += '<p class="customer">Платник: ' + esc(customer ? customer.name : '—');
   if (customer && customer.edrpou) html += ' (ЄДРПОУ ' + esc(customer.edrpou) + ')';
   html += '</p>';
