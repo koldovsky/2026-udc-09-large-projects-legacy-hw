@@ -21,16 +21,35 @@ function toDate(value) {
 }
 
 /**
- * Format a date for display.
+ * Format a date for the accounting export (MM/DD/YYYY).
+ *
+ * The Облік-Плюс import accepts only this shape and silently drops rows in
+ * any other — see docs/integrations/oblik-plus.md. lib/export/accounting.js
+ * reaches this function by column type ("Date"), so do not change its output.
+ * Dates that customers see go through formatDateUa below (BILL-482).
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} MM/DD/YYYY, or '' for an empty or invalid value
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Date for people (BILL-482): "2026-03-09" -> "09.03.2026" (дд.мм.рррр).
+ * Used by the invoice HTML and the reminder mails.
+ *
+ * @param {string|Date} value  YYYY-MM-DD string or a Date
+ * @returns {string} DD.MM.YYYY, or '' for an empty or invalid value
+ */
+function formatDateUa(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +94,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDateUa: formatDateUa,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,
