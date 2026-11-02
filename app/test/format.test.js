@@ -20,6 +20,13 @@ test('formatText: trims and strips separators', function () {
   assert.equal(format.formatText(undefined), '');
 });
 
+test('formatDisplayDate: DD.MM.YYYY for people (BILL-482)', function () {
+  assert.equal(format.formatDisplayDate('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatDisplayDate(new Date(Date.UTC(2026, 11, 3))), '03.12.2026');
+  assert.equal(format.formatDisplayDate(''), '');
+  assert.equal(format.formatDisplayDate('not a date'), '');
+});
+
 test('formatPercent', function () {
   assert.equal(format.formatPercent(20), '20%');
 });

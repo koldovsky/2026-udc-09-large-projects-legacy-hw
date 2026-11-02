@@ -21,16 +21,32 @@ function toDate(value) {
 }
 
 /**
- * Format a date for display.
+ * Format a date for the accounting export (machine-read, see below).
+ *
+ * NB: despite the name this is NOT for people. It is MM/DD/YYYY because the
+ * Oblik-Plus import reads it (config/export-columns.json, type "Date") and
+ * silently drops rows in any other format. Do not change it; for dates people
+ * read use formatDisplayDate below.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} MM/DD/YYYY
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/**
+ * Date for people (invoices, reminder mails): 2026-03-09 -> "09.03.2026".
+ * BILL-482: "03/09/2026" was read as 3 September.
+ */
+function formatDisplayDate(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +91,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatDisplayDate: formatDisplayDate,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,
