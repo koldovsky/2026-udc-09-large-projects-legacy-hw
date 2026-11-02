@@ -88,6 +88,17 @@ test('formatDate: current output is MM/DD/YYYY in UTC', function () {
   assert.equal(format.formatDate('not a date'), '');
 });
 
+// Task E: a mutant switching getUTC* to local getters survived on a UTC+1/+2
+// box. Run the formatters in a process west of UTC, where it would show.
+test('date formatters do not depend on the server time zone', function () {
+  var out = childProcess.execFileSync(
+    process.execPath,
+    ['-e', "var f = require('./lib/format'); process.stdout.write(f.formatDate('2026-03-09') + ' ' + f.formatDisplayDate('2026-03-09'))"],
+    { cwd: APP, encoding: 'utf8', env: Object.assign({}, process.env, { TZ: 'America/New_York' }) },
+  );
+  assert.equal(out, '03/09/2026 09.03.2026');
+});
+
 // --- 1. invoice HTML (people) ------------------------------------------------
 
 test('invoice HTML for INV-2026-00007 matches the golden master', function () {
