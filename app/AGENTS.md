@@ -35,7 +35,7 @@
 
 - `lib/legacy/templates.js` має свій хелпер `date` (`dmy` → `дд.мм.рррр`), але він **мертвий**: `templates/` немає, а `pdf-client.js` ніхто не імпортує. Його правка нічого не змінить.
 - `lib/discounts` ніхто не викликає, прапорець `loyaltyDiscounts` у `config/features.json` нічого не вмикає. `newAgingBuckets` ніхто не читає.
-- `audit.record()` ніхто не викликає, тож `/api/audit` читає порожній журнал.
+- `audit.record()` не викликає жоден робочий модуль (`lib/`, `bin/`, `server.js`) — лише тести `test/audit/record.test.js`. Тож у продакшні `/api/audit` читає порожній журнал.
 - `lib/reports/*` мають **власні** `dates.js` і `table.js` і від `lib/format.js` не залежать.
 
 ## 6. Робота з репо на Windows

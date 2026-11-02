@@ -46,7 +46,7 @@
 | `lib/catalog` | Каталог, залишки, імпорт цін | Живий |
 | `lib/payments` | Парсер KB-2, зіставлення, імпорт | Живий |
 | `lib/reports` | Виручка, aging, топ, ПДВ. **Власні** `dates.js` і `table.js`, `lib/format.js` не використовує | Живий |
-| `lib/audit` | Журнал `out/audit.log`, читання, ротація | Напівмертвий: `audit.record()` ніхто не викликає |
+| `lib/audit` | Журнал `out/audit.log`, читання, ротація | Напівмертвий: `audit.record()` не викликає жоден робочий модуль (лише тести `test/audit/record.test.js`) |
 | `lib/discounts` | Знижки постійним клієнтам (прапорець `loyaltyDiscounts`) | Мертвий («Nothing calls this module») |
 | `lib/legacy/pdf-client.js`, `templates.js` | PDF-сервіс і міні-Handlebars із власним хелпером `date` → `DD.MM.YYYY` | Мертві (`templates/` немає, сервіс вимкнено у 2020) |
 | `lib/legacy/mongo-migrate.js` | Разова міграція | Мертвий |
@@ -75,12 +75,13 @@
 
 | Що | Де | Хто використовує |
 |---|---|---|
-| `formatDate` → `MM/DD/YYYY` | `lib/format.js:29-34` | `invoices/render.js:38-39`, `reminders.js:40,46`, **`export/accounting.js:30`, без імені, через тип колонки `Date`** |
+| `formatDate` → `MM/DD/YYYY` | `lib/format.js:29-34` до BILL-482 | **До BILL-482** (так агент побачив код): `invoices/render.js:38-39`, `reminders.js:40,46` і **`export/accounting.js:30` — без імені, через тип колонки `Date`**. **Після BILL-482** — лише експорт (машинний контракт, не змінювати) |
+| `formatDisplayDate` → `дд.мм.рррр` | `lib/format.js` (додано в BILL-482) | `invoices/render.js:38-39`, `reminders.js:40,46` — дати, які читають люди |
 | `formatMoney` → `1 234,50 грн` | `lib/format.js:40` | рахунок, листи |
 | `formatDecimal` → `1234.50` | `lib/format.js:54` | експорт (тип `Decimal`) |
 | Власні копії грошей | `reports/table.js:14`, `customers/index.js:32`, `discounts/index.js:132`, `catalog/price-import.js`, `bin/import-statement.js`, `legacy/templates.js` | `lib/format.js` не чіпають |
 | Власні дати | `reports/dates.js` (ISO, назви місяців), `legacy/templates.js` (`dmy` → `DD.MM.YYYY`, мертвий), `payments/statement.js` (парсинг `DDMMYYYY`) | `lib/format.js` не чіпають |
-| «Сьогодні» = `toISOString().slice(0,10)`, тобто UTC | `invoices/routes.js:44`, `customers/index.js:28`, `bin/nightly-export.js:12`, `bin/send-reminders.js:12`, `payments/matcher.js:47`, `audit/index.js:48` | До 03:00 за Києвом це «вчора». **[виправлено]**: агент зарахував сюди `invoices/index.js` і `orders/status.js`, але там `toISOString` використовується для інших цілей (див. твердження 9) |
+| «Сьогодні» = `toISOString().slice(0,10)`, тобто UTC | `invoices/routes.js:44`, `customers/index.js:28`, `bin/nightly-export.js:12`, `bin/send-reminders.js:12`, `payments/matcher.js:47`, `audit/index.js:48` | До 02:00 (взимку, UTC+2) або 03:00 (влітку, UTC+3) за Києвом це «вчора». **[виправлено]**: агент зарахував сюди `invoices/index.js` і `orders/status.js`, але там `toISOString` використовується для інших цілей (див. твердження 9) |
 
 ## 3. Перевірка — щонайменше 10 тверджень
 
@@ -95,7 +96,7 @@
 | 5 | `/invoices/:number` доступний без `x-staff-id`, `/api/*` без нього дає 401 | ✅ | `lib/http/router.js:100-101`: перевірка лише для шляхів, що починаються з `/api/` |
 | 6 | «Сам сервер заголовок **не перевіряє**, довіряє proxy» | ⚠️ частково | Наявність заголовка перевіряється (`router.js:101`, 401). Не перевіряється лише справжність значення. Формулювання агента надто сильне |
 | 7 | `lib/discounts` мертвий: прапорець `loyaltyDiscounts` нічого не вмикає | ✅ | `grep -rn "require('../discounts')\|require('./discounts')" lib bin server.js` → порожньо. Коментар `lib/discounts/index.js:7-9` збігається з кодом |
-| 8 | `audit.record()` не викликає жоден модуль, журнал порожній | ✅ | `grep -rn "audit\.record\|\.record(" lib bin \| grep -v ^lib/audit` → порожньо. `require('../audit')` теж ніде немає |
+| 8 | `audit.record()` не викликає жоден робочий модуль (лише тести), журнал у продакшні порожній | ✅ | `grep -rn "audit\.record\|\.record(" lib bin \| grep -v ^lib/audit` → порожньо. `require('../audit')` теж ніде немає |
 | 9 | «Сьогодні» через `toISOString` (UTC) береться в `invoices/index.js` і `orders/status.js` | ❌ | `lib/invoices/index.js:8-12` — це `addDays()`, арифметика над переданою датою, а не «сьогодні». `lib/orders/status.js:90` бере повний timestamp без `slice`, тобто це не дата. Агент склав список за `grep toISOString`, не дивлячись на контекст. Справжнє «сьогодні» при виставленні рахунку визначається в `lib/invoices/routes.js:44` |
 | 10 | Прапорці `upcoming_reminded` / `overdue_reminded` ніхто не записує, тому лист «прострочено» може йти щодня | ✅ | `grep -rn "_reminded" lib bin \| grep -v ^lib/notifications` → порожньо. `bin/send-reminders.js` нічого не позначає |
 | 11 | `newAgingBuckets` у `config/features.json` ніхто не читає | ✅ | `grep -rn newAgingBuckets lib bin` → порожньо |
