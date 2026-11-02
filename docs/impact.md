@@ -57,3 +57,28 @@
 Прогін на незміненому коді: `cd app && npm test` → `tests 115, pass 115, fail 0` (106 засіяних + 9 нових).
 
 Коміт із тестами (до зміни): цей коміт
+
+## 5. Після зміни (Task C)
+
+**Що зроблено.** `lib/format.js#formatDate` **не змінено**: його поведінку читає «Облік-Плюс» через тип колонки `Date`. Поряд додано `formatDisplayDate` → `дд.мм.рррр`, і на неї переведено **лише** двох людських споживачів: `lib/invoices/render.js:38-39` і `lib/notifications/reminders.js:40,46`. Докстрінг `formatDate` виправлено. Він стверджував «returns the date in ISO format», а тепер пояснює, що це формат для експорту і чому його не можна чіпати. Конфіг `config/export-columns.json`, `lib/export/accounting.js` і `app/data/*.json` не змінювались.
+
+> Чому не «змінити `formatDate` і додати `formatUsDate` для експорту»: тоді довелося б міняти `type` у `config/export-columns.json`. Документ інтеграції каже, що цей файл бухгалтерія правує сама і «типи колонок не міняти», тож диф зачепив би машинний контракт. Обраний варіант залишає машинний шлях недоторканим.
+
+Прогін після зміни, до оновлення очікувань: `tests 116, pass 110, fail 6` (116 — разом із новим тестом `formatDisplayDate` у `test/format.test.js`). Почервоніли рівно людські виходи, усі три тести експорту лишились зеленими.
+
+| Тест | Почервонів? | Очікувано (вихід мав змінитись) чи регресія? | Що зробили |
+|---|---|---|---|
+| `characterization/dates.test.js` → `formatDate: current output is MM/DD/YYYY in UTC` | ні | — (спільний хелпер, і через нього експорт, не мав змінитись) | нічого |
+| `characterization` → `invoice HTML for INV-2026-00007 …` | **так** | **Очікувано**: HTML-рахунок читає клієнт, тікет просить `дд.мм.рррр` | Еталон `golden/invoice-INV-2026-00007.html` перегенеровано (`UPDATE_GOLDEN=1`). Диф еталона: рівно 2 підстановки, `03/07/2026` → `07.03.2026` і `03/21/2026` → `21.03.2026`, решта HTML байт-у-байт та сама |
+| `characterization` → `GET /invoices/:number serves the same HTML` | **так** | **Очікувано**: та сама сторінка, посилання з тікета | Той самий еталон |
+| `characterization` → `bin/render-invoice.js prints the same HTML` | **так** | **Очікувано**: той самий рахунок через CLI | Той самий еталон |
+| `characterization` → `reminder mails for 2026-03-13 …` | **так** | **Очікувано**: листи читає клієнт, тікет прямо згадує «сплатити до 03/12/2026» | Еталон `golden/reminders-2026-03-13.json` перегенеровано. Диф: 7 рядків `text`, у кожному змінилась тільки дата (`03/16/2026` → `16.03.2026`, `02/21/2026` → `21.02.2026` тощо). `to`, `subject`, `kind`, суми не змінились |
+| `characterization` → `bin/send-reminders.js writes the same mails to the outbox` | **так** | **Очікувано**: ті самі листи, але вже як файли, які cron кладе для SMTP-relay; relay текст не розбирає, читає клієнт | Еталон `golden/outbox-2026-03-13.txt` перегенеровано. Диф: у 7 рядках «до …» змінилась лише дата (`03/16/2026` → `16.03.2026` тощо). Імена файлів, `To:`, `Subject:`, суми не змінились |
+| `characterization` → `accounting CSV for Облік-Плюс matches the golden master byte for byte` | **ні** | — (машинний вихід, мав лишитись) | Нічого. `git diff -- app/test/characterization/golden/oblik-export.csv` порожній |
+| `characterization` → `bin/nightly-export.js writes the same file` | **ні** | — | нічого |
+| `characterization` → `accounting CSV: date columns are MM/DD/YYYY` | **ні** | — | нічого |
+| `test/invoices.test.js` → `rendered invoice shows number, customer, dates and totals` (засіяний) | **так** | **Очікувано**: це саме той вихід, на який скаржиться тікет (`03/09/2026` → `09.03.2026`) | Змінено **лише** два `assert.match` з датами (`03\/09\/2026` → `09\.03\.2026`, `03\/23\/2026` → `23\.03\.2026`) і додано коментар `BILL-482`. Решту перевірок тесту не чіпав |
+| `test/format.test.js` → новий `formatDisplayDate: DD.MM.YYYY for people (BILL-482)` | — (новий) | — | Додано: фіксує новий хелпер, включно з порожнім і невалідним входом, як у `formatDate` |
+| Решта 105 засіяних тестів | ні | — | нічого |
+
+Підсумок: `cd app && npm test` → `tests 116, pass 116, fail 0`. Машинний вихід (CSV для «Облік-Плюс») байт-у-байт той самий, бухгалтерію попереджати не треба.
