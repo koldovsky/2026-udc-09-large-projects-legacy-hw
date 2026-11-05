@@ -1,0 +1,2 @@
+# Golden outputs are byte contracts, including CSV CRLF and mail JSON LF.
+app/test/fixtures/* -text

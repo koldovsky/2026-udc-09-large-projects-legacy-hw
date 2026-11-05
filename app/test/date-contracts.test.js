@@ -22,6 +22,15 @@ test('legacy date contract: UTC, padding, timestamp strings and empty values', f
   });
 });
 
+test('customer date contract: Ukrainian order with the same UTC and empty-value semantics', function () {
+  assert.equal(format.formatCustomerDate('2026-03-09'), '09.03.2026');
+  assert.equal(format.formatCustomerDate('2024-02-29T23:59:00Z'), '29.02.2024');
+  assert.equal(format.formatCustomerDate(new Date('2026-12-31T23:59:00-02:00')), '01.01.2027');
+  [null, undefined, '', 'not-a-date', new Date(NaN)].forEach(function (value) {
+    assert.equal(format.formatCustomerDate(value), '');
+  });
+});
+
 test('invoice HTML complete output contract', function () {
   assert.equal(render.renderInvoiceHtml(fixture.invoice, fixture.customer), golden('invoice.html'));
 });

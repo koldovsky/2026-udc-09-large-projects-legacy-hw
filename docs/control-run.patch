@@ -1,0 +1,25 @@
+diff --git a/app/lib/format.js b/app/lib/format.js
+index 59f699e..4d35341 100644
+--- a/app/lib/format.js
++++ b/app/lib/format.js
+@@ -27 +27 @@ function toDate(value) {
+- * @returns {string} the date in ISO format
++ * @returns {string} the date in Ukrainian format (DD.MM.YYYY)
+@@ -33 +33 @@ function formatDate(value) {
+-  return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
++  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
+diff --git a/app/test/invoices.test.js b/app/test/invoices.test.js
+index 418787e..38bf967 100644
+--- a/app/test/invoices.test.js
++++ b/app/test/invoices.test.js
+@@ -41,2 +41,2 @@ test('rendered invoice shows number, customer, dates and totals', function () {
+-  assert.match(html, /Дата: <b>03\/09\/2026<\/b>/);
+-  assert.match(html, /Сплатити до: <b>03\/23\/2026<\/b>/);
++  assert.match(html, /Дата: <b>09\.03\.2026<\/b>/);
++  assert.match(html, /Сплатити до: <b>23\.03\.2026<\/b>/);
+diff --git a/app/test/reminders.test.js b/app/test/reminders.test.js
+index 9a0c325..41311d5 100644
+--- a/app/test/reminders.test.js
++++ b/app/test/reminders.test.js
+@@ -29,0 +30 @@ test('reminder mail addresses the contact and names the amount', function () {
++  assert.match(mails[0].text, /сплатити до 12\.03\.2026/);

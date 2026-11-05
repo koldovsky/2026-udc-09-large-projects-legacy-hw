@@ -46,8 +46,26 @@ Golden outputs were generated once from the unchanged code, then inspected; test
 | Invoice HTTP handler | Full seeded invoice HTML and status without listening | Green |
 
 Baseline: 106/106 seeded tests; after characterization: 114/114, with `app/lib/` unchanged.
-The separate commit titled `test: characterize BILL-482 date consumers before implementation` contains these tests and this pre-change analysis; its hash is recorded below after commit creation.
+Pre-change commit: `343568a` (`test: characterize BILL-482 date consumers before implementation`).
 
 ## 5. Post-change review
 
-Pending implementation; accounting fixtures and the legacy helper contract must remain unchanged.
+Added `formatCustomerDate`, using the same parsing, UTC, padding and empty-value semantics as the existing helper.
+Only the invoice renderer and the two reminder branches use it; dynamic accounting dispatch still resolves `formatDate`.
+
+After the production change, before updating expectations, a targeted run reported 14 tests: 8 passed and 6 failed.
+Five new characterization tests and one seeded invoice test failed exactly where customer dates changed.
+
+| Test / fixture | Failed? | Classification | Expectation change |
+|---|---|---|---|
+| Invoice HTML / `invoice.html` | Yes | Intended customer change | `03/09/2026` → `09.03.2026`, `03/12/2026` → `12.03.2026` |
+| Upcoming / `upcoming.json` | Yes | Intended customer change | Due date `03/12/2026` → `12.03.2026` |
+| Overdue / `overdue.json` | Yes | Intended customer change | Due date `03/12/2026` → `12.03.2026` |
+| CLI and HTTP / `seed-invoice.html` | Both | Intended customer change | Seed invoice issue/due dates change order and separator only |
+| Seeded `invoices.test.js` | Yes | Intended customer change | HTML issue `09.03.2026`, due `23.03.2026` |
+| Legacy helper, both accounting golden tests | No | Machine contracts preserved | No changed expectations |
+
+Human golden files were edited by date-token substitution only, rather than regenerated from the new implementation.
+Added a new helper test for UTC rollover, leap date, timestamp strings and invalid/empty inputs.
+`.gitattributes` preserves exact golden bytes across Windows checkouts; CSV remains CRLF and reminder JSON remains LF.
+Final full-suite result: 115 passed, 0 failed (106 seeded plus 9 added).
