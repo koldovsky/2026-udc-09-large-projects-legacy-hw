@@ -1,16 +1,29 @@
 var test = require('node:test');
 var assert = require('node:assert/strict');
 var fs = require('node:fs');
+var os = require('node:os');
 var path = require('node:path');
 var execFileSync = require('node:child_process').execFileSync;
 var format = require('../lib/format');
 var render = require('../lib/invoices/render');
 var reminders = require('../lib/notifications/reminders');
 var accounting = require('../lib/export/accounting');
+var store = require('../lib/store');
 var fixture = require('./fixtures/date-contract-input.json');
 
 function golden(name) {
   return fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
+}
+
+function invoiceStore(t) {
+  var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'billing-date-contracts-'));
+  t.after(function () { fs.rmSync(dir, { recursive: true, force: true }); });
+  fs.writeFileSync(path.join(dir, 'invoices.json'), JSON.stringify([fixture.invoice]));
+  fs.writeFileSync(path.join(dir, 'customers.json'), JSON.stringify([fixture.customer]));
+  // Preload the same isolated store in the CLI child, without production flags.
+  fs.writeFileSync(path.join(dir, 'open-store.cjs'),
+    'require(' + JSON.stringify(require.resolve('../lib/store')) + ').open(__dirname);\n');
+  return dir;
 }
 
 test('legacy date contract: UTC, padding, timestamp strings and empty values', function () {
@@ -53,19 +66,26 @@ test('accounting missing customer and empty dates contract', function () {
   assert.equal(accounting.buildAccountingFile([invoice], {}), golden('accounting-empty.csv'));
 });
 
-test('invoice CLI complete output contract', function () {
-  var actual = execFileSync(process.execPath, ['bin/render-invoice.js', 'INV-2026-00007'], {
+test('invoice CLI complete output contract', function (t) {
+  var dir = invoiceStore(t);
+  var actual = execFileSync(process.execPath, ['--require', path.join(dir, 'open-store.cjs'), 'bin/render-invoice.js', fixture.invoice.number], {
     cwd: path.join(__dirname, '..'), encoding: 'utf8',
   });
-  assert.equal(actual, golden('seed-invoice.html'));
+  assert.equal(actual, golden('invoice.html'));
 });
 
 test('invoice HTTP handler complete output contract without starting a server', function (t, done) {
+  store.open(invoiceStore(t));
+  t.after(function () { store.open(); });
   var route = require('../lib/invoices/routes').find(function (r) { return r.path === '/invoices/:number'; });
-  route.handler({}, {}, { params: { number: 'INV-2026-00007' } }, function (err, status, html) {
+  route.handler({}, {}, { params: { number: fixture.invoice.number } }, function (err, status, html) {
     if (err) return done(err);
-    assert.equal(status, 200);
-    assert.equal(html, golden('seed-invoice.html'));
+    try {
+      assert.equal(status, 200);
+      assert.equal(html, golden('invoice.html'));
+    } catch (e) {
+      return done(e);
+    }
     done();
   });
 });

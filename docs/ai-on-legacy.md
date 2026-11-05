@@ -57,11 +57,48 @@ Baseline: INV-2026-00007;03/09/2026;03/12/2026;10000001;ТОВ <Тест> філ
 Control:  INV-2026-00007;09.03.2026;12.03.2026;10000001;ТОВ <Тест> філія 2;1000.00;200.00;1200.00
 ```
 
-Reproduce from the primary repo root while the temporary clone remains:
+Reconstruct the saved application changes from the primary repo root in PowerShell; no original temporary directory or model access is needed.
+This replays the patch rather than rerunning the model; course-file deletion is unnecessary for the output comparison.
 
 ```powershell
-node -e "var f=require('./app/test/fixtures/date-contract-input.json'); var a=require('C:/Users/pc/AppData/Local/Temp/bill482-control-8b1a262599884e78a64de07bc64a2e60/app/lib/export/accounting'); console.log(a.buildAccountingFile([f.invoice],{1:f.customer}));"
+$repoRoot = (Get-Location).Path
+$controlRoot = Join-Path ([IO.Path]::GetTempPath()) ('bill482-repro-' + [guid]::NewGuid().ToString('N'))
+git clone --quiet --no-hardlinks --config core.autocrlf=false $repoRoot $controlRoot
+if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }
+git -C $controlRoot checkout --quiet --detach b03fb5d9b66929158c19280e4d70407f2b874ffe
+if ($LASTEXITCODE -ne 0) { throw 'Baseline checkout failed' }
+git -C $controlRoot apply --unidiff-zero (Join-Path $repoRoot 'docs/control-run.patch')
+if ($LASTEXITCODE -ne 0) { throw 'Control patch failed' }
+
+@'
+var assert = require('node:assert/strict');
+var path = require('node:path');
+var f = require('./app/test/fixtures/date-contract-input.json');
+var main = require('./app/lib/export/accounting');
+var control = require(path.join(process.argv[2], 'app/lib/export/accounting'));
+var expected = require('node:fs').readFileSync('./app/test/fixtures/accounting.csv', 'utf8');
+var mainCsv = main.buildAccountingFile([f.invoice], {1: f.customer});
+var controlCsv = control.buildAccountingFile([f.invoice], {1: f.customer});
+assert.equal(mainCsv, expected);
+assert.equal(controlCsv, expected.replace('03/09/2026;03/12/2026', '09.03.2026;12.03.2026'));
+assert.notEqual(mainCsv, controlCsv);
+console.log('Main CSV matches the US-date golden; control CSV changes both dates.');
+console.log('Main:    ' + mainCsv.split('\r\n')[1]);
+console.log('Control: ' + controlCsv.split('\r\n')[1]);
+'@ | node - $controlRoot
+if ($LASTEXITCODE -ne 0) { throw 'CSV comparison failed' }
+
+Push-Location (Join-Path $controlRoot 'app')
+try {
+  npm test
+  if ($LASTEXITCODE -ne 0) { throw 'Control tests failed' }
+} finally {
+  Pop-Location
+}
 ```
+
+Expected: the CSV comparison succeeds by demonstrating the regression, while all 106 control tests pass.
+The reconstructed clone remains at `$controlRoot` for inspection.
 
 This violates the `MM/DD/YYYY` integration contract in `app/docs/integrations/oblik-plus.md`.
 The external importer itself was not executed; its documented silent rejection behavior was not independently observed.

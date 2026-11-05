@@ -84,9 +84,9 @@ Paths and line numbers refer to the baseline unless stated otherwise.
 | 11 | Reminders have upcoming and overdue branches | ✅ | `app/lib/notifications/reminders.js:18`, `:37`, `:43`; both golden tests |
 | 12 | Invoice JSON dates bypass display formatting | ✅ | `app/lib/invoices/routes.js:15`, `:26`; only HTML handler calls renderer |
 | 13 | Current invoices apply loyalty discounts | ❌ | `app/lib/invoices/index.js:53` uses totals directly; no discounts import; `rg -n discounts app/lib app/bin` |
-| 14 | Reminder CLI directly sends SMTP | ❌ | `app/bin/send-reminders.js:29` writes files; `rg -n 'smtp|SMTP|writeFile' app/bin/send-reminders.js` |
+| 14 | Reminder CLI directly sends SMTP | ❌ | `app/bin/send-reminders.js:29` writes files; `rg -n 'smtp\|SMTP\|writeFile' app/bin/send-reminders.js` |
 | 15 | Reports share the invoice date formatter | ❌ | `app/lib/reports/render.js:7` imports local dates; `rg -n 'require.*format' app/lib` finds only three production consumers |
-| 16 | Historical PDF module is the current renderer | ❌ | `rg -n 'pdf-client|legacy/templates' app/server.js app/lib app/bin` finds no active importer of PDF client |
+| 16 | Historical PDF module is the current renderer | ❌ | `rg -n 'pdf-client\|legacy/templates' app/server.js app/lib app/bin` finds no active importer of PDF client |
 
 ## 4. Verification scope
 

@@ -69,3 +69,13 @@ Human golden files were edited by date-token substitution only, rather than rege
 Added a new helper test for UTC rollover, leap date, timestamp strings and invalid/empty inputs.
 `.gitattributes` preserves exact golden bytes across Windows checkouts; CSV remains CRLF and reminder JSON remains LF.
 Final full-suite result: 115 passed, 0 failed (106 seeded plus 9 added).
+
+## 6. PR review follow-up
+
+The original CLI/HTTP characterizations read the working `app/data` directory, making their seeded golden sensitive to routine customer edits.
+Both now write `date-contract-input.json` records into temporary stores and compare against the existing `invoice.html` golden.
+The CLI child opens its temporary store through a test-only Node preload; the HTTP handler uses `store.open(dir)` and resets the store afterward.
+Each test removes its temporary directory; the obsolete `seed-invoice.html` golden is removed.
+These changes preserve complete output coverage without changing production code or shared data.
+Validation: all 115 tests pass; the nine date-contract tests also pass with reads from working `app/data` explicitly blocked in both parent and CLI child processes.
+The revised control-run instructions were executed from the document: a fresh baseline clone plus the saved patch reproduces the CSV regression while all 106 control tests pass.
