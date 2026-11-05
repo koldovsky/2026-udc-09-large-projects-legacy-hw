@@ -1,0 +1,13 @@
+{
+  "invoice": {
+    "id": 7, "number": "INV-2026-00007", "customer_id": 1,
+    "issued_at": "2026-03-09", "due_at": "2026-03-12", "status": "issued",
+    "subtotal_kopecks": 100000, "vat_kopecks": 20000, "total_kopecks": 120000,
+    "vat_rate": 20,
+    "lines": [{ "title": "Папір <A4>", "qty": 4, "unit_price_kopecks": 25000 }]
+  },
+  "customer": {
+    "id": 1, "name": "ТОВ <Тест>; філія\n2", "edrpou": "10000001",
+    "contact_name": "Ірина", "email": "client@example.invalid"
+  }
+}
