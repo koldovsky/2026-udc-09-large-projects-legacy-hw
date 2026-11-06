@@ -10,6 +10,8 @@ Baseline guidance for an Agentic IDE working in **this homework repo**.
 
 ## Context
 
+- Before editing billing code, read [`app/AGENTS.md`](app/AGENTS.md) for verified integration contracts and legacy traps.
+
 - `app/` is an eight-year-old billing back office ("prykladpostach-billing"):
   customers, orders, invoices, payments, reminders, reports, exports.
   **Plain Node.js, CommonJS, callbacks, no npm dependencies, no build step.**

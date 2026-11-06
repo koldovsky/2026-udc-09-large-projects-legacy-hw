@@ -24,13 +24,21 @@ function toDate(value) {
  * Format a date for display.
  *
  * @param {string|Date} value  YYYY-MM-DD string or a Date
- * @returns {string} the date in ISO format
+ * @returns {string} MM/DD/YYYY (accounting import contract)
  */
 function formatDate(value) {
   if (!value) return '';
   var d = toDate(value);
   if (isNaN(d.getTime())) return '';
   return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) + '/' + d.getUTCFullYear();
+}
+
+/** Customer-facing date; keep formatDate stable for configured CSV columns. */
+function formatCustomerDate(value) {
+  if (!value) return '';
+  var d = toDate(value);
+  if (isNaN(d.getTime())) return '';
+  return pad(d.getUTCDate()) + '.' + pad(d.getUTCMonth() + 1) + '.' + d.getUTCFullYear();
 }
 
 /**
@@ -75,6 +83,7 @@ function formatPercent(value) {
 
 module.exports = {
   formatDate: formatDate,
+  formatCustomerDate: formatCustomerDate,
   formatMoney: formatMoney,
   formatDecimal: formatDecimal,
   formatText: formatText,
